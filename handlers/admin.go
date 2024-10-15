@@ -61,54 +61,105 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	// 获取项目数量
+	projectCount, err := models.GetProjectCount()
+	if err != nil {
+		http.Error(w, "获取项目数量失败", http.StatusInternalServerError)
+		return
+	}
+
+	// 获取员工数量
+	employeeCount, err := models.GetEmployeeCount()
+	if err != nil {
+		http.Error(w, "获取员工数量失败", http.StatusInternalServerError)
+		return
+	}
+
+	// 获取本月总工时
+	currentMonthHours, err := models.GetCurrentMonthTotalHours()
+	if err != nil {
+		http.Error(w, "获取本月总工时失败", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		ProjectCount      int
+		EmployeeCount     int
+		CurrentMonthHours float64
+	}{
+		ProjectCount:      projectCount,
+		EmployeeCount:     employeeCount,
+		CurrentMonthHours: currentMonthHours,
+	}
+
 	tmpl, err := template.ParseFiles("templates/admin_dashboard.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, data)
 }
 
 func ManageProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		name := r.FormValue("name")
-		code := r.FormValue("code")
-		err := models.CreateProject(name, code)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		// 处理添加或编辑项目的逻辑
+		action := r.FormValue("action")
+		if action == "add" {
+			name := r.FormValue("name")
+			code := r.FormValue("code")
+			err := models.CreateProject(name, code)
+			if err != nil {
+				http.Error(w, "创建项目失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else if action == "edit" {
+			id := r.FormValue("id")
+			name := r.FormValue("name")
+			code := r.FormValue("code")
+			err := models.UpdateProject(id, name, code)
+			if err != nil {
+				http.Error(w, "更新项目失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else if action == "delete" {
+			id := r.FormValue("id")
+			err := models.DeleteProject(id)
+			if err != nil {
+				http.Error(w, "删除项目失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
-		http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/project", http.StatusSeeOther)
 		return
 	}
 
 	projects, err := models.GetAllProjects()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "获取项目列表失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/manage_project.html"))
+	tmpl, err := template.ParseFiles("templates/manage_project.html")
+	if err != nil {
+		http.Error(w, "加载模板失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	tmpl.Execute(w, projects)
 }
 
 func ManageEmployee(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		name := r.FormValue("name")
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-		department := r.FormValue("department")
-		err := models.CreateEmployee(name, username, password, department)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+	employees, err := models.GetAllEmployees()
+	if err != nil {
+		http.Error(w, "获取员工列表失败", http.StatusInternalServerError)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/manage_employee.html"))
-	tmpl.Execute(w, nil)
+	tmpl, err := template.ParseFiles("templates/manage_employee.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmpl.Execute(w, employees)
 }
 
 func ExportTimesheet(w http.ResponseWriter, r *http.Request) {

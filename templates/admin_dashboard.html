@@ -6,15 +6,36 @@
     <title>管理员仪表板</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
-    <h1>管理员仪表板</h1>
-    <nav>
-        <ul>
-            <li><a href="/admin/project">管理项目</a></li>
-            <li><a href="/admin/employee">管理员工</a></li>
-            <li><a href="/admin/export">导出工时表</a></li>
-        </ul>
-    </nav>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">管理员仪表板</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">项目数量</h2>
+                <p class="text-3xl font-bold">{{.ProjectCount}}</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">员工数量</h2>
+                <p class="text-3xl font-bold">{{.EmployeeCount}}</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">本月总工时</h2>
+                <p class="text-3xl font-bold">{{.CurrentMonthHours}}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="/admin/project" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                管理项目
+            </a>
+            <a href="/admin/employee" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                管理员工
+            </a>
+            <a href="/admin/export" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+                导出工时表
+            </a>
+        </div>
+    </div>
 </body>
 </html>
-

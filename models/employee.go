@@ -43,3 +43,32 @@ func GetEmployeeByID(id int) (*Employee, error) {
 	}
 	return &e, nil
 }
+
+func GetEmployeeCount() (int, error) {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM employees").Scan(&count)
+	return count, err
+}
+
+func GetAllEmployees() ([]Employee, error) {
+	rows, err := database.DB.Query("SELECT id, name, username, department FROM employees")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var employees []Employee
+	for rows.Next() {
+		var e Employee
+		if err := rows.Scan(&e.ID, &e.Name, &e.Username, &e.Department); err != nil {
+			return nil, err
+		}
+		employees = append(employees, e)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return employees, nil
+}

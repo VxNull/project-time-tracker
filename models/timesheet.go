@@ -45,3 +45,18 @@ func GetTimesheetsByEmployee(employeeID int) ([]Timesheet, error) {
 	}
 	return timesheets, nil
 }
+
+func GetCurrentMonthTotalHours() (float64, error) {
+	var totalHours float64
+	currentYear, currentMonth, _ := time.Now().Date()
+	startOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.Local)
+	endOfMonth := startOfMonth.AddDate(0, 1, -1)
+
+	err := database.DB.QueryRow(`
+		SELECT COALESCE(SUM(hours), 0) 
+		FROM timesheets 
+		WHERE date >= ? AND date <= ?
+	`, startOfMonth, endOfMonth).Scan(&totalHours)
+
+	return totalHours, err
+}
