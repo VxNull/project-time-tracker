@@ -102,17 +102,19 @@ func AdminDashboard(w http.ResponseWriter, r *http.Request) {
 
 func ManageProject(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		// 处理添加或编辑项目的逻辑
 		action := r.FormValue("action")
-		if action == "add" {
+		switch action {
+		case "add":
 			name := r.FormValue("name")
 			code := r.FormValue("code")
 			err := models.CreateProject(name, code)
 			if err != nil {
+				log.Printf("创建项目失败: %v", err)
 				http.Error(w, "创建项目失败: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-		} else if action == "edit" {
+			log.Printf("成功创建项目: %s (%s)", name, code)
+		case "edit":
 			id := r.FormValue("id")
 			name := r.FormValue("name")
 			code := r.FormValue("code")
@@ -121,7 +123,7 @@ func ManageProject(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "更新项目失败: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-		} else if action == "delete" {
+		case "delete":
 			id := r.FormValue("id")
 			err := models.DeleteProject(id)
 			if err != nil {
@@ -135,16 +137,26 @@ func ManageProject(w http.ResponseWriter, r *http.Request) {
 
 	projects, err := models.GetAllProjects()
 	if err != nil {
+		log.Printf("获取项目列表失败: %v", err)
 		http.Error(w, "获取项目列表失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("获取到 %d 个项目", len(projects))
+
 	tmpl, err := template.ParseFiles("templates/manage_project.html")
 	if err != nil {
-		http.Error(w, "加载模板失败: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("解析模板失败: %v", err)
+		http.Error(w, "解析模板失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, projects)
+
+	err = tmpl.Execute(w, projects)
+	if err != nil {
+		log.Printf("渲染模板失败: %v", err)
+		http.Error(w, "渲染模板失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func ManageEmployee(w http.ResponseWriter, r *http.Request) {

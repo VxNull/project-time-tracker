@@ -28,7 +28,7 @@ func InitDB(dbPath string) error {
 		CREATE TABLE IF NOT EXISTS projects (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
-			code TEXT UNIQUE NOT NULL
+			code TEXT NOT NULL UNIQUE
 		);
 
 		CREATE TABLE IF NOT EXISTS timesheets (
@@ -50,4 +50,8 @@ func InitDB(dbPath string) error {
 	`)
 
 	return err
+}
+
+func TestConnection() error {
+	return DB.Ping()
 }

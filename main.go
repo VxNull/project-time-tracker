@@ -42,6 +42,13 @@ func main() {
 	// 设置静态文件服务
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+	// 数据库连接测试
+	err = database.TestConnection()
+	if err != nil {
+		log.Fatal("数据库连接测试失败:", err)
+	}
+	log.Println("数据库连接测试成功")
+
 	// 启动服务器
 	log.Println("服务器启动在 http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
