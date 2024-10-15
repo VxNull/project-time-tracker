@@ -61,3 +61,15 @@ func GetProjectCount() (int, error) {
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM projects").Scan(&count)
 	return count, err
 }
+
+func IsProjectNameExist(name string) (bool, error) {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM projects WHERE name = ?", name).Scan(&count)
+	return count > 0, err
+}
+
+func IsProjectCodeExist(code string) (bool, error) {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM projects WHERE code = ?", code).Scan(&count)
+	return count > 0, err
+}

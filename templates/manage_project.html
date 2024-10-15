@@ -15,7 +15,13 @@
             </a>
         </div>
         
-        <form action="/admin/project" method="POST" class="mb-8 bg-white shadow-md rounded px-8 pt-6 pb-8">
+        <!-- 添加错误消息区域 -->
+        <div id="error-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" style="display: none;" role="alert">
+            <span class="block sm:inline" id="error-text"></span>
+        </div>
+        
+        <!-- 添加项目表单 -->
+        <form id="add-project-form" action="/admin/project" method="POST" class="mb-8 bg-white shadow-md rounded px-8 pt-6 pb-8">
             <input type="hidden" name="action" value="add">
             <div class="flex flex-col md:flex-row md:items-center md:space-x-4">
                 <div class="flex-grow mb-4 md:mb-0">
@@ -134,6 +140,37 @@
             </td>
         `;
     }
+
+    // 添加这个函数来显示错误消息
+    function showError(message) {
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+
+    // 修改添加项目的表单提交逻辑
+    document.getElementById('add-project-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/admin/project', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.text();
+        })
+        .then(() => {
+            window.location.reload();
+        })
+        .catch(error => {
+            showError(error.message);
+        });
+    });
     </script>
 </body>
 </html>

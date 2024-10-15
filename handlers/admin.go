@@ -107,13 +107,32 @@ func ManageProject(w http.ResponseWriter, r *http.Request) {
 		case "add":
 			name := r.FormValue("name")
 			code := r.FormValue("code")
-			err := models.CreateProject(name, code)
+
+			nameExist, err := models.IsProjectNameExist(name)
 			if err != nil {
-				log.Printf("创建项目失败: %v", err)
+				http.Error(w, "检查项目名称失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if nameExist {
+				http.Error(w, "项目名称已存在", http.StatusBadRequest)
+				return
+			}
+
+			codeExist, err := models.IsProjectCodeExist(code)
+			if err != nil {
+				http.Error(w, "检查项目代码失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if codeExist {
+				http.Error(w, "项目代码已存在", http.StatusBadRequest)
+				return
+			}
+
+			err = models.CreateProject(name, code)
+			if err != nil {
 				http.Error(w, "创建项目失败: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			log.Printf("成功创建项目: %s (%s)", name, code)
 		case "edit":
 			id := r.FormValue("id")
 			name := r.FormValue("name")
