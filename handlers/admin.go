@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 )
 
 func AdminLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println("访问管理员登录页面")
+
 	if r.Method == "POST" {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -28,8 +31,23 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/admin_login.html"))
-	tmpl.Execute(w, nil)
+	log.Println("尝试加载模板")
+	tmpl, err := template.ParseFiles("templates/admin_login.html")
+	if err != nil {
+		log.Printf("模板加载失败: %v", err)
+		http.Error(w, "模板加载失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("尝试渲染模板")
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		log.Printf("模板渲染失败: %v", err)
+		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("管理员登录页面渲染完成")
 }
 
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
