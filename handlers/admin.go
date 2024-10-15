@@ -10,6 +10,8 @@ import (
 
 	"github.com/VxNull/project-time-tracker/database"
 	"github.com/VxNull/project-time-tracker/models"
+	"github.com/VxNull/project-time-tracker/store"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func AdminLogin(w http.ResponseWriter, r *http.Request) {
@@ -19,16 +21,24 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		// 这里应该有更安全的认证方式,比如使用bcrypt加密密码
-		if username == "admin" && password == "password" {
-			http.SetCookie(w, &http.Cookie{
-				Name:  "admin",
-				Value: "true",
-				Path:  "/",
-			})
-			http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+		admin, err := models.GetAdminByUsername(username)
+		if err != nil {
+			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
 			return
 		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password))
+		if err != nil {
+			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
+			return
+		}
+
+		session, _ := store.Store.Get(r, "session")
+		session.Values["admin"] = true
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+		return
 	}
 
 	log.Println("尝试加载模板")
@@ -51,7 +61,11 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("templates/admin_dashboard.html"))
+	tmpl, err := template.ParseFiles("templates/admin_dashboard.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	tmpl.Execute(w, nil)
 }
 

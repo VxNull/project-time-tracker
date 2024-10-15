@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/VxNull/project-time-tracker/models"
+	"github.com/VxNull/project-time-tracker/store"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,7 +27,7 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		session, _ := GetStore().Get(r, "session")
+		session, _ := store.Store.Get(r, "session")
 		session.Values["employee_id"] = employee.ID
 		session.Save(r, w)
 
@@ -47,7 +48,7 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {
-	session, _ := GetStore().Get(r, "session")
+	session, _ := store.Store.Get(r, "session")
 	employeeID, ok := session.Values["employee_id"].(int)
 	if !ok {
 		http.Redirect(w, r, "/employee/login", http.StatusSeeOther)
@@ -92,7 +93,7 @@ func SubmitTimesheet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, _ := GetStore().Get(r, "session")
+	session, _ := store.Store.Get(r, "session")
 	employeeID, ok := session.Values["employee_id"].(int)
 	if !ok {
 		http.Redirect(w, r, "/employee/login", http.StatusSeeOther)

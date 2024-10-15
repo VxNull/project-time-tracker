@@ -8,37 +8,44 @@ import (
 
 var DB *sql.DB
 
-func InitDB() error {
+func InitDB(dbPath string) error {
 	var err error
-	DB, err = sql.Open("sqlite3", "./timesheet.db")
+	DB, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return err
 	}
 
-	// 创建必要的表
+	// 创建表的SQL语句
 	_, err = DB.Exec(`
-		CREATE TABLE IF NOT EXISTS projects (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT NOT NULL,
-			code TEXT NOT NULL
-		);
-
 		CREATE TABLE IF NOT EXISTS employees (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
-			username TEXT NOT NULL UNIQUE,
+			username TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL,
 			department TEXT NOT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS projects (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			code TEXT UNIQUE NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS timesheets (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			employee_id INTEGER,
 			project_id INTEGER,
-			hours FLOAT,
-			date DATE,
-			FOREIGN KEY(employee_id) REFERENCES employees(id),
-			FOREIGN KEY(project_id) REFERENCES projects(id)
+			hours REAL NOT NULL,
+			date DATE NOT NULL,
+			description TEXT,
+			FOREIGN KEY (employee_id) REFERENCES employees (id),
+			FOREIGN KEY (project_id) REFERENCES projects (id)
+		);
+
+		CREATE TABLE IF NOT EXISTS admins (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			username TEXT UNIQUE NOT NULL,
+			password TEXT NOT NULL
 		);
 	`)
 
