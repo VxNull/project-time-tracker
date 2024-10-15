@@ -34,8 +34,16 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/employee_login.html"))
-	tmpl.Execute(w, nil)
+	tmpl, err := template.ParseFiles("templates/employee_login.html")
+	if err != nil {
+		http.Error(w, "模板加载失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {
