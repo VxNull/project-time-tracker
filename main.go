@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"your-project-path/database"
-	"your-project-path/handlers"
+	"github.com/VxNull/project-time-tracker/database"
+	"github.com/VxNull/project-time-tracker/handlers"
 
 	"github.com/gorilla/mux"
 )
