@@ -33,3 +33,13 @@ func GetEmployeeByUsername(username string) (*Employee, error) {
 	}
 	return &e, nil
 }
+
+func GetEmployeeByID(id int) (*Employee, error) {
+	var e Employee
+	err := database.DB.QueryRow("SELECT id, name, username, password, department FROM employees WHERE id = ?", id).
+		Scan(&e.ID, &e.Name, &e.Username, &e.Password, &e.Department)
+	if err != nil {
+		return nil, err
+	}
+	return &e, nil
+}

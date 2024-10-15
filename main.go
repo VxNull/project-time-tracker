@@ -6,8 +6,9 @@ import (
 
 	"github.com/VxNull/project-time-tracker/database"
 	"github.com/VxNull/project-time-tracker/handlers"
+	"github.com/VxNull/project-time-tracker/middleware"
 
-	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 func main() {
@@ -17,23 +18,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r := mux.NewRouter()
+	store := sessions.NewCookieStore([]byte("your-secret-key"))
+	handlers.InitStore(store)
 
-	// 管理员路由
-	r.HandleFunc("/admin/login", handlers.AdminLogin).Methods("GET", "POST")
-	r.HandleFunc("/admin/dashboard", handlers.AdminDashboard).Methods("GET")
-	r.HandleFunc("/admin/project", handlers.ManageProject).Methods("GET", "POST")
-	r.HandleFunc("/admin/employee", handlers.ManageEmployee).Methods("GET", "POST")
-	r.HandleFunc("/admin/export", handlers.ExportTimesheet).Methods("GET")
+	http.HandleFunc("/", handlers.Home)
+	http.HandleFunc("/admin/login", handlers.AdminLogin)
+	http.HandleFunc("/admin/dashboard", middleware.AdminAuthMiddleware(handlers.AdminDashboard))
+	http.HandleFunc("/admin/project", middleware.AdminAuthMiddleware(handlers.ManageProject))
+	http.HandleFunc("/admin/employee", middleware.AdminAuthMiddleware(handlers.ManageEmployee))
+	http.HandleFunc("/admin/export", middleware.AdminAuthMiddleware(handlers.ExportTimesheet))
 
-	// 员工路由
-	r.HandleFunc("/employee/login", handlers.EmployeeLogin).Methods("GET", "POST")
-	r.HandleFunc("/employee/dashboard", handlers.EmployeeDashboard).Methods("GET")
-	r.HandleFunc("/employee/timesheet", handlers.SubmitTimesheet).Methods("POST")
+	http.HandleFunc("/employee/login", handlers.EmployeeLogin)
+	http.HandleFunc("/employee/dashboard", middleware.AuthMiddleware(handlers.EmployeeDashboard))
+	http.HandleFunc("/employee/submit", middleware.AuthMiddleware(handlers.SubmitTimesheet))
 
-	// 静态文件服务
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	log.Println("Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
