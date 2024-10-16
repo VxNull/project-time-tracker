@@ -179,9 +179,46 @@ func ManageProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func ManageEmployee(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		action := r.FormValue("action")
+		switch action {
+		case "add":
+			name := r.FormValue("name")
+			username := r.FormValue("username")
+			password := r.FormValue("password")
+			department := r.FormValue("department")
+
+			err := models.CreateEmployee(name, username, password, department)
+			if err != nil {
+				http.Error(w, "创建员工失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case "edit":
+			id := r.FormValue("id")
+			name := r.FormValue("name")
+			username := r.FormValue("username")
+			department := r.FormValue("department")
+
+			err := models.UpdateEmployee(id, name, username, department)
+			if err != nil {
+				http.Error(w, "更新员工失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		case "delete":
+			id := r.FormValue("id")
+			err := models.DeleteEmployee(id)
+			if err != nil {
+				http.Error(w, "删除员工失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		http.Redirect(w, r, "/admin/employee", http.StatusSeeOther)
+		return
+	}
+
 	employees, err := models.GetAllEmployees()
 	if err != nil {
-		http.Error(w, "获取员工列表失败", http.StatusInternalServerError)
+		http.Error(w, "获取员工列表失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

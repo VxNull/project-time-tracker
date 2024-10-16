@@ -72,3 +72,14 @@ func GetAllEmployees() ([]Employee, error) {
 
 	return employees, nil
 }
+
+func UpdateEmployee(id, name, username, department string) error {
+	_, err := database.DB.Exec("UPDATE employees SET name = ?, username = ?, department = ? WHERE id = ?",
+		name, username, department, id)
+	return err
+}
+
+func DeleteEmployee(id string) error {
+	_, err := database.DB.Exec("DELETE FROM employees WHERE id = ?", id)
+	return err
+}
