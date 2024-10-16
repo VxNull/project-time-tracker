@@ -132,3 +132,13 @@ func IsUsernameExist(username string) (bool, error) {
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM employees WHERE username = ?", username).Scan(&count)
 	return count > 0, err
 }
+
+func ResetEmployeePassword(id string, newPassword string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = database.DB.Exec("UPDATE employees SET password = ? WHERE id = ?", string(hashedPassword), id)
+	return err
+}

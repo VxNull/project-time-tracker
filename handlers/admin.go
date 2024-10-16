@@ -224,6 +224,16 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "删除员工失败: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+		case "reset_password":
+			id := r.FormValue("id")
+			newPassword := r.FormValue("new_password")
+			err := models.ResetEmployeePassword(id, newPassword)
+			if err != nil {
+				http.Error(w, "重置密码失败: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Write([]byte("密码重置成功"))
+			return
 		}
 		http.Redirect(w, r, "/admin/employee", http.StatusSeeOther)
 		return
