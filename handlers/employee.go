@@ -57,34 +57,61 @@ func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {
 
 	employee, err := models.GetEmployeeByID(employeeID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "获取员工信息失败", http.StatusInternalServerError)
 		return
 	}
 
 	projects, err := models.GetAllProjects()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "获取项目列表失败", http.StatusInternalServerError)
 		return
 	}
 
 	timesheets, err := models.GetTimesheetsByEmployee(employeeID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "获取工时记录失败", http.StatusInternalServerError)
 		return
+	}
+
+	type TimesheetWithProjectName struct {
+		models.Timesheet
+		ProjectName string
+	}
+
+	var timesheetsWithProjectNames []TimesheetWithProjectName
+	for _, ts := range timesheets {
+		project, err := models.GetProjectByID(ts.ProjectID)
+		if err != nil {
+			http.Error(w, "获取项目信息失败", http.StatusInternalServerError)
+			return
+		}
+		timesheetsWithProjectNames = append(timesheetsWithProjectNames, TimesheetWithProjectName{
+			Timesheet:   ts,
+			ProjectName: project.Name,
+		})
 	}
 
 	data := struct {
 		Employee   *models.Employee
 		Projects   []models.Project
-		Timesheets []models.Timesheet
+		Timesheets []TimesheetWithProjectName
 	}{
 		Employee:   employee,
 		Projects:   projects,
-		Timesheets: timesheets,
+		Timesheets: timesheetsWithProjectNames,
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/employee_dashboard.html"))
-	tmpl.Execute(w, data)
+	tmpl, err := template.ParseFiles("templates/employee_dashboard.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func SubmitTimesheet(w http.ResponseWriter, r *http.Request) {

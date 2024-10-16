@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>员工仪表板</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+    <style>
+        .flatpickr-calendar.monthSelect {
+            width: 300px;
+        }
+        .flatpickr-monthSelect-month {
+            width: 33.3%;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
@@ -35,7 +46,7 @@
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="month">
                         所属月份
                     </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="month" name="month" type="text" required>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="month" name="month" type="text" required readonly>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
@@ -72,6 +83,10 @@
                         <td class="border px-4 py-2">{{.Description}}</td>
                         <td class="border px-4 py-2">{{.SubmitDate.Format "2006-01-02 15:04:05"}}</td>
                     </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="5" class="border px-4 py-2 text-center">暂无工时记���</td>
+                    </tr>
                     {{end}}
                 </tbody>
             </table>
@@ -81,15 +96,14 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         flatpickr("#month", {
-            dateFormat: "Y-m",
-            plugins: [
-                new monthSelectPlugin({
-                    shorthand: true,
-                    dateFormat: "Y-m",
-                    altFormat: "F Y",
-                    theme: "light"
-                })
-            ]
+            locale: "zh",
+            plugins: [new monthSelectPlugin({
+                shorthand: true,
+                dateFormat: "Y-m",
+                altFormat: "Y年m月",
+                theme: "light"
+            })],
+            static: true
         });
     });
     </script>

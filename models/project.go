@@ -73,3 +73,12 @@ func IsProjectCodeExist(code string) (bool, error) {
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM projects WHERE code = ?", code).Scan(&count)
 	return count > 0, err
 }
+
+func GetProjectByID(id int) (*Project, error) {
+	var p Project
+	err := database.DB.QueryRow("SELECT id, name, code FROM projects WHERE id = ?", id).Scan(&p.ID, &p.Name, &p.Code)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
