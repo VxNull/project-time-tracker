@@ -195,3 +195,38 @@ func GetEmployeeMonthlyHours(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func EmployeeLogout(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Store.Get(r, "session")
+	session.Values["employee_id"] = nil
+	session.Save(r, w)
+	http.Redirect(w, r, "/employee/login", http.StatusSeeOther)
+}
+
+func UpdateTimesheet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "方法不允许", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Store.Get(r, "session")
+	employeeID, ok := session.Values["employee_id"].(int)
+	if !ok {
+		http.Redirect(w, r, "/employee/login", http.StatusSeeOther)
+		return
+	}
+
+	timesheetID := r.URL.Path[len("/employee/update/"):]
+	projectID, _ := strconv.Atoi(r.FormValue("project_id"))
+	hours, _ := strconv.ParseFloat(r.FormValue("hours"), 64)
+	month, _ := time.Parse("2006-01", r.FormValue("month"))
+	description := r.FormValue("description")
+
+	err := models.UpdateTimesheet(timesheetID, employeeID, projectID, hours, month, description)
+	if err != nil {
+		http.Error(w, "Failed to update timesheet: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/employee/dashboard", http.StatusSeeOther)
+}

@@ -103,3 +103,12 @@ func GetEmployeeMonthlyHours(employeeID int, month time.Time) ([]MonthlyProjectH
 
 	return projectHours, totalHours, nil
 }
+
+func UpdateTimesheet(id string, employeeID, projectID int, hours float64, month time.Time, description string) error {
+	_, err := database.DB.Exec(`
+		UPDATE timesheets 
+		SET project_id = ?, hours = ?, month = ?, description = ?
+		WHERE id = ? AND employee_id = ?
+	`, projectID, hours, month, description, id, employeeID)
+	return err
+}

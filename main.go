@@ -36,9 +36,11 @@ func main() {
 	http.HandleFunc("/admin/export", middleware.AdminAuthMiddleware(handlers.ExportTimesheet))
 
 	http.HandleFunc("/employee/login", handlers.EmployeeLogin)
+	http.HandleFunc("/employee/logout", handlers.EmployeeLogout)
 	http.HandleFunc("/employee/dashboard", middleware.AuthMiddleware(handlers.EmployeeDashboard))
 	http.HandleFunc("/employee/submit", middleware.AuthMiddleware(handlers.SubmitTimesheet))
 	http.HandleFunc("/employee/monthly-hours", middleware.AuthMiddleware(handlers.GetEmployeeMonthlyHours))
+	http.HandleFunc("/employee/update/", middleware.AuthMiddleware(handlers.UpdateTimesheet))
 
 	// 设置静态文件服务
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
