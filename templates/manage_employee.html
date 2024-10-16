@@ -15,6 +15,12 @@
             </a>
         </div>
         
+        <!-- 添加这个错误消息显示区域 -->
+        <div id="error-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" style="display: none;" role="alert">
+            <strong class="font-bold">错误！</strong>
+            <span id="error-text" class="block sm:inline"></span>
+        </div>
+
         <!-- 添加员工表单 -->
         <form id="add-employee-form" action="/admin/employee" method="POST" class="mb-8 bg-white shadow-md rounded px-8 pt-6 pb-8">
             <input type="hidden" name="action" value="add">
@@ -130,18 +136,30 @@
         const name = document.getElementById(`edit-name-${id}`).value;
         const username = document.getElementById(`edit-username-${id}`).value;
         const superiorId = document.getElementById(`edit-superior-${id}`).value;
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/employee';
-        form.innerHTML = `
-            <input type="hidden" name="action" value="edit">
-            <input type="hidden" name="id" value="${id}">
-            <input type="hidden" name="name" value="${name}">
-            <input type="hidden" name="username" value="${username}">
-            <input type="hidden" name="superior_id" value="${superiorId}">
-        `;
-        document.body.appendChild(form);
-        form.submit();
+        
+        const formData = new FormData();
+        formData.append('action', 'edit');
+        formData.append('id', id);
+        formData.append('name', name);
+        formData.append('username', username);
+        formData.append('superior_id', superiorId);
+
+        fetch('/admin/employee', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.text();
+        })
+        .then(() => {
+            window.location.reload();
+        })
+        .catch(error => {
+            showError(error.message);
+        });
     }
 
     function cancelEdit(id, name, username, superior) {
@@ -165,6 +183,37 @@
             </td>
         `;
     }
+
+    // 添加这个函数来显示错误消息
+    function showError(message) {
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+
+    // 修改添加员工的表单提交逻辑
+    document.getElementById('add-employee-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/admin/employee', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.text();
+        })
+        .then(() => {
+            window.location.reload();
+        })
+        .catch(error => {
+            showError(error.message);
+        });
+    });
     </script>
 </body>
 </html>

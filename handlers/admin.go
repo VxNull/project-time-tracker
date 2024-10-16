@@ -197,7 +197,7 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 
 			err := models.CreateEmployee(name, username, password, superiorIDPtr)
 			if err != nil {
-				http.Error(w, "创建员工失败: "+err.Error(), http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 		case "edit":
@@ -214,7 +214,7 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 
 			err := models.UpdateEmployee(id, name, username, superiorIDPtr)
 			if err != nil {
-				http.Error(w, "更新员工失败: "+err.Error(), http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 		case "delete":

@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/VxNull/project-time-tracker/database"
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +18,15 @@ type Employee struct {
 }
 
 func CreateEmployee(name, username, password string, superiorID *int) error {
+	// 首先检查用户名是否已存在
+	exist, err := IsUsernameExist(username)
+	if err != nil {
+		return err
+	}
+	if exist {
+		return fmt.Errorf("用户名 '%s' 已存在", username)
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -83,13 +93,30 @@ func GetAllEmployees() ([]Employee, error) {
 }
 
 func UpdateEmployee(id string, name, username string, superiorID *int) error {
+	// 首先检查新用户名是否与其他员工冲突
+	var currentUsername string
+	err := database.DB.QueryRow("SELECT username FROM employees WHERE id = ?", id).Scan(&currentUsername)
+	if err != nil {
+		return err
+	}
+
+	if username != currentUsername {
+		exist, err := IsUsernameExist(username)
+		if err != nil {
+			return err
+		}
+		if exist {
+			return fmt.Errorf("用户名 '%s' 已存在", username)
+		}
+	}
+
 	var superiorIDValue sql.NullInt64
 	if superiorID != nil {
 		superiorIDValue.Int64 = int64(*superiorID)
 		superiorIDValue.Valid = true
 	}
 
-	_, err := database.DB.Exec("UPDATE employees SET name = ?, username = ?, superior_id = ? WHERE id = ?",
+	_, err = database.DB.Exec("UPDATE employees SET name = ?, username = ?, superior_id = ? WHERE id = ?",
 		name, username, superiorIDValue, id)
 	return err
 }
@@ -97,4 +124,11 @@ func UpdateEmployee(id string, name, username string, superiorID *int) error {
 func DeleteEmployee(id string) error {
 	_, err := database.DB.Exec("DELETE FROM employees WHERE id = ?", id)
 	return err
+}
+
+// 添加这个新函数
+func IsUsernameExist(username string) (bool, error) {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM employees WHERE username = ?", username).Scan(&count)
+	return count > 0, err
 }
