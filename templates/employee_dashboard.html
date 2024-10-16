@@ -18,6 +18,7 @@
             width: 33.3%;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
@@ -56,9 +57,10 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="monthlyHoursStats">
                             当月工时统计
                         </label>
-                        <div id="monthlyHoursStats" class="bg-gray-100 p-3 rounded-lg h-[38px] overflow-y-auto">
-                            <!-- 这里将通过 JavaScript 动态更新 -->
+                        <div id="monthlyHoursStats" class="bg-gray-100 p-3 rounded-lg" style="height: 200px;">
+                            <canvas id="hoursChart"></canvas>
                         </div>
+                        <div id="totalHours" class="mt-2 text-right font-bold"></div>
                     </div>
                 </div>
                 
@@ -112,6 +114,8 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        let hoursChart = null;
+
         const monthPicker = flatpickr("#month", {
             locale: "zh",
             plugins: [new monthSelectPlugin({
@@ -132,19 +136,73 @@
                 .then(response => response.json())
                 .then(data => {
                     const statsDiv = document.getElementById('monthlyHoursStats');
-                    let html = '';
+                    const totalHoursDiv = document.getElementById('totalHours');
+
+                    // 清除旧的内容
+                    statsDiv.innerHTML = '';
+                    totalHoursDiv.textContent = '';
+
                     if (data.projectHours && data.projectHours.length > 0) {
-                        html = data.projectHours.map(ph => `${ph.ProjectName}: ${ph.Hours}小时`).join(', ');
+                        // 创建新的 canvas 元素
+                        const newCanvas = document.createElement('canvas');
+                        newCanvas.id = 'hoursChart';
+                        statsDiv.appendChild(newCanvas);
+
+                        const labels = data.projectHours.map(ph => ph.ProjectName);
+                        const hours = data.projectHours.map(ph => ph.Hours);
+
+                        // 如果存在旧的图表实例，销毁它
+                        if (hoursChart) {
+                            hoursChart.destroy();
+                        }
+
+                        hoursChart = new Chart(newCanvas, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '工时',
+                                    data: hours,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: '工时'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        totalHoursDiv.textContent = `总计: ${data.totalHours || 0} 小时`;
                     } else {
-                        html = '本月暂无工时记录';
+                        statsDiv.innerHTML = '<p class="text-center py-4">本月暂无工时记录</p>';
+                        // 如果存在旧的图表实例，销毁它
+                        if (hoursChart) {
+                            hoursChart.destroy();
+                            hoursChart = null;
+                        }
                     }
-                    html += `<br><strong>总计: ${data.totalHours || 0} 小时</strong>`;
-                    statsDiv.innerHTML = html;
                 })
                 .catch(error => {
                     console.error('获取月度工时统计失败:', error);
                     const statsDiv = document.getElementById('monthlyHoursStats');
-                    statsDiv.innerHTML = '<span class="text-red-500">获取工时统计失败，请稍后再试。</span>';
+                    statsDiv.innerHTML = '<p class="text-red-500 text-center py-4">获取工时统计失败，请稍后再试。</p>';
+                    document.getElementById('totalHours').textContent = '';
+                    // 如果存在旧的图表实例，销毁它
+                    if (hoursChart) {
+                        hoursChart.destroy();
+                        hoursChart = null;
+                    }
                 });
         }
 
