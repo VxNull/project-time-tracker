@@ -21,81 +21,98 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-4">欢迎, {{.Employee.Name}}</h1>
+        <h1 class="text-3xl font-bold mb-6">员工仪表板</h1>
         
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <h2 class="text-2xl font-bold mb-4">提交工时</h2>
-            <form action="/employee/submit" method="POST">
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="project">
-                        项目
-                    </label>
-                    <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="project" name="project_id" required>
-                        {{range .Projects}}
-                        <option value="{{.ID}}">{{.Name}}</option>
-                        {{end}}
-                    </select>
+        <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
+            <h2 class="text-2xl font-bold mb-6">提交工时</h2>
+            <form action="/employee/submit" method="POST" id="timesheetForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="project">
+                            项目
+                        </label>
+                        <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="project" name="project_id" required>
+                            {{range .Projects}}
+                            <option value="{{.ID}}">{{.Name}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="hours">
+                            工时
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="hours" name="hours" type="number" step="0.5" min="0" required>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="hours">
-                        工时
-                    </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="hours" name="hours" type="number" step="0.5" min="0" required>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="month">
+                            所属月份
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="month" name="month" type="text" required readonly>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="monthlyHoursStats">
+                            当月工时统计
+                        </label>
+                        <div id="monthlyHoursStats" class="bg-gray-100 p-3 rounded-lg h-[38px] overflow-y-auto">
+                            <!-- 这里将通过 JavaScript 动态更新 -->
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="month">
-                        所属月份
-                    </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="month" name="month" type="text" required readonly>
-                </div>
-                <div class="mb-4">
+                
+                <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
                         描述
                     </label>
                     <textarea class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" rows="3"></textarea>
                 </div>
-                <div class="flex items-center justify-between">
+                
+                <div class="flex items-center justify-end mt-6">
                     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-                        提交
+                        提交工时
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <h2 class="text-2xl font-bold mb-4">最近工时记录</h2>
-            <table class="w-full">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2">项目</th>
-                        <th class="px-4 py-2">工时</th>
-                        <th class="px-4 py-2">月份</th>
-                        <th class="px-4 py-2">描述</th>
-                        <th class="px-4 py-2">提交日期</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range .Timesheets}}
-                    <tr>
-                        <td class="border px-4 py-2">{{.ProjectName}}</td>
-                        <td class="border px-4 py-2">{{.Hours}}</td>
-                        <td class="border px-4 py-2">{{.Month.Format "2006-01"}}</td>
-                        <td class="border px-4 py-2">{{.Description}}</td>
-                        <td class="border px-4 py-2">{{.SubmitDate.Format "2006-01-02 15:04:05"}}</td>
-                    </tr>
-                    {{else}}
-                    <tr>
-                        <td colspan="5" class="border px-4 py-2 text-center">暂无工时记���</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+        <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
+            <h2 class="text-2xl font-bold mb-6">最近工时记录</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="px-4 py-2 text-left">项目</th>
+                            <th class="px-4 py-2 text-left">工时</th>
+                            <th class="px-4 py-2 text-left">月份</th>
+                            <th class="px-4 py-2 text-left">描述</th>
+                            <th class="px-4 py-2 text-left">提交日期</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Timesheets}}
+                        <tr class="border-b">
+                            <td class="px-4 py-2">{{.ProjectName}}</td>
+                            <td class="px-4 py-2">{{.Hours}}</td>
+                            <td class="px-4 py-2">{{.Month.Format "2006-01"}}</td>
+                            <td class="px-4 py-2">{{.Description}}</td>
+                            <td class="px-4 py-2">{{.SubmitDate.Format "2006-01-02 15:04:05"}}</td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="5" class="px-4 py-2 text-center">暂无工时记录</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        flatpickr("#month", {
+        const monthPicker = flatpickr("#month", {
             locale: "zh",
             plugins: [new monthSelectPlugin({
                 shorthand: true,
@@ -103,8 +120,36 @@
                 altFormat: "Y年m月",
                 theme: "light"
             })],
-            static: true
+            static: true,
+            defaultDate: "{{.CurrentMonth}}",
+            onChange: function(selectedDates, dateStr, instance) {
+                updateMonthlyHours(dateStr);
+            }
         });
+
+        function updateMonthlyHours(month) {
+            fetch(`/employee/monthly-hours?month=${month}`)
+                .then(response => response.json())
+                .then(data => {
+                    const statsDiv = document.getElementById('monthlyHoursStats');
+                    let html = '';
+                    if (data.projectHours && data.projectHours.length > 0) {
+                        html = data.projectHours.map(ph => `${ph.ProjectName}: ${ph.Hours}小时`).join(', ');
+                    } else {
+                        html = '本月暂无工时记录';
+                    }
+                    html += `<br><strong>总计: ${data.totalHours || 0} 小时</strong>`;
+                    statsDiv.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('获取月度工时统计失败:', error);
+                    const statsDiv = document.getElementById('monthlyHoursStats');
+                    statsDiv.innerHTML = '<span class="text-red-500">获取工时统计失败，请稍后再试。</span>';
+                });
+        }
+
+        // 初始加载当前月份的工时统计
+        updateMonthlyHours("{{.CurrentMonth}}");
     });
     </script>
 </body>

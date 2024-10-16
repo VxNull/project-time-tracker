@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -92,13 +94,27 @@ func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Employee   *models.Employee
-		Projects   []models.Project
-		Timesheets []TimesheetWithProjectName
+		Employee          *models.Employee
+		Projects          []models.Project
+		Timesheets        []TimesheetWithProjectName
+		CurrentMonth      string
+		MonthlyHours      []models.MonthlyProjectHours
+		TotalMonthlyHours float64
 	}{
-		Employee:   employee,
-		Projects:   projects,
-		Timesheets: timesheetsWithProjectNames,
+		Employee:     employee,
+		Projects:     projects,
+		Timesheets:   timesheetsWithProjectNames,
+		CurrentMonth: time.Now().Format("2006-01"),
+	}
+
+	// 获取当前月份的工时统计
+	currentMonth := time.Now().UTC().Truncate(time.Hour * 24 * 30)
+	monthlyHours, totalHours, err := models.GetEmployeeMonthlyHours(employeeID, currentMonth)
+	if err != nil {
+		log.Printf("获取月度工时统计失败: %v", err)
+	} else {
+		data.MonthlyHours = monthlyHours
+		data.TotalMonthlyHours = totalHours
 	}
 
 	tmpl, err := template.ParseFiles("templates/employee_dashboard.html")
@@ -139,4 +155,43 @@ func SubmitTimesheet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/employee/dashboard", http.StatusSeeOther)
+}
+
+func GetEmployeeMonthlyHours(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Store.Get(r, "session")
+	employeeID, ok := session.Values["employee_id"].(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	monthStr := r.URL.Query().Get("month")
+	month, err := time.Parse("2006-01", monthStr)
+	if err != nil {
+		http.Error(w, "Invalid month format", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("获取员工 %d 在 %s 月份的工时统计", employeeID, monthStr)
+
+	projectHours, totalHours, err := models.GetEmployeeMonthlyHours(employeeID, month)
+	if err != nil {
+		log.Printf("获取月度工时统计失败: %v", err)
+		// 即使出错，也返回一个空的有效响应
+		projectHours = []models.MonthlyProjectHours{}
+		totalHours = 0
+	}
+
+	log.Printf("找到 %d 个项目的工时记录，总工时: %.2f", len(projectHours), totalHours)
+
+	response := struct {
+		ProjectHours []models.MonthlyProjectHours `json:"projectHours"`
+		TotalHours   float64                      `json:"totalHours"`
+	}{
+		ProjectHours: projectHours,
+		TotalHours:   totalHours,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

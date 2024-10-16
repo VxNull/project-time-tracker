@@ -65,3 +65,41 @@ func GetCurrentMonthTotalHours() (float64, error) {
 
 	return totalHours, nil
 }
+
+type MonthlyProjectHours struct {
+	ProjectID   int
+	ProjectName string
+	Hours       float64
+}
+
+func GetEmployeeMonthlyHours(employeeID int, month time.Time) ([]MonthlyProjectHours, float64, error) {
+	// 计算月份的开始和结束时间
+	startOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.UTC)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Second)
+
+	rows, err := database.DB.Query(`
+		SELECT t.project_id, p.name, SUM(t.hours)
+		FROM timesheets t
+		JOIN projects p ON t.project_id = p.id
+		WHERE t.employee_id = ? AND t.month >= ? AND t.month <= ?
+		GROUP BY t.project_id, p.name
+	`, employeeID, startOfMonth.Format("2006-01-02"), endOfMonth.Format("2006-01-02"))
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var projectHours []MonthlyProjectHours
+	var totalHours float64
+
+	for rows.Next() {
+		var ph MonthlyProjectHours
+		if err := rows.Scan(&ph.ProjectID, &ph.ProjectName, &ph.Hours); err != nil {
+			return nil, 0, err
+		}
+		projectHours = append(projectHours, ph)
+		totalHours += ph.Hours
+	}
+
+	return projectHours, totalHours, nil
+}
