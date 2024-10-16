@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/VxNull/project-time-tracker/database"
@@ -186,9 +187,15 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 			name := r.FormValue("name")
 			username := r.FormValue("username")
 			password := r.FormValue("password")
-			department := r.FormValue("department")
+			superiorID := r.FormValue("superior_id")
 
-			err := models.CreateEmployee(name, username, password, department)
+			var superiorIDPtr *int
+			if superiorID != "" {
+				id, _ := strconv.Atoi(superiorID)
+				superiorIDPtr = &id
+			}
+
+			err := models.CreateEmployee(name, username, password, superiorIDPtr)
 			if err != nil {
 				http.Error(w, "创建员工失败: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -197,9 +204,15 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 			id := r.FormValue("id")
 			name := r.FormValue("name")
 			username := r.FormValue("username")
-			department := r.FormValue("department")
+			superiorID := r.FormValue("superior_id")
 
-			err := models.UpdateEmployee(id, name, username, department)
+			var superiorIDPtr *int
+			if superiorID != "" {
+				id, _ := strconv.Atoi(superiorID)
+				superiorIDPtr = &id
+			}
+
+			err := models.UpdateEmployee(id, name, username, superiorIDPtr)
 			if err != nil {
 				http.Error(w, "更新员工失败: "+err.Error(), http.StatusInternalServerError)
 				return

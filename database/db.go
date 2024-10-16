@@ -22,7 +22,8 @@ func InitDB(dbPath string) error {
 			name TEXT NOT NULL,
 			username TEXT UNIQUE NOT NULL,
 			password TEXT NOT NULL,
-			department TEXT NOT NULL
+			superior_id INTEGER,
+			FOREIGN KEY (superior_id) REFERENCES employees (id)
 		);
 
 		CREATE TABLE IF NOT EXISTS projects (

@@ -19,19 +19,24 @@
         <form id="add-employee-form" action="/admin/employee" method="POST" class="mb-8 bg-white shadow-md rounded px-8 pt-6 pb-8">
             <input type="hidden" name="action" value="add">
             <div class="flex flex-wrap -mx-3 mb-6">
-                <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+                <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
                     <input type="text" name="name" placeholder="姓名" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
-                <div class="w-full md:w-1/2 px-3">
+                <div class="w-full md:w-1/3 px-3">
                     <input type="text" name="username" placeholder="用户名" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="w-full md:w-1/3 px-3">
+                    <input type="password" name="password" placeholder="密码" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
             </div>
             <div class="flex flex-wrap -mx-3 mb-6">
-                <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
-                    <input type="password" name="password" placeholder="密码" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="w-full md:w-1/2 px-3">
-                    <input type="text" name="department" placeholder="部门" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <div class="w-full px-3">
+                    <select name="superior_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">无上级</option>
+                        {{range .}}
+                        <option value="{{.ID}}">{{.Name}}</option>
+                        {{end}}
+                    </select>
                 </div>
             </div>
             <div class="flex items-center justify-between">
@@ -49,7 +54,7 @@
                         <th class="px-4 py-2 text-left">ID</th>
                         <th class="px-4 py-2 text-left">姓名</th>
                         <th class="px-4 py-2 text-left">用户名</th>
-                        <th class="px-4 py-2 text-left">部门</th>
+                        <th class="px-4 py-2 text-left">上级</th>
                         <th class="px-4 py-2 text-left">操作</th>
                     </tr>
                 </thead>
@@ -59,7 +64,7 @@
                         <td class="px-4 py-2">{{.ID}}</td>
                         <td class="px-4 py-2"><span class="employee-name">{{.Name}}</span></td>
                         <td class="px-4 py-2"><span class="employee-username">{{.Username}}</span></td>
-                        <td class="px-4 py-2"><span class="employee-department">{{.Department}}</span></td>
+                        <td class="px-4 py-2"><span class="employee-superior">{{if .SuperiorName.Valid}}{{.SuperiorName.String}}{{else}}无{{end}}</span></td>
                         <td class="px-4 py-2">
                             <button onclick="editEmployee('{{.ID}}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2">
                                 编辑
@@ -88,10 +93,14 @@
         const row = document.querySelector(`.employee-row[data-id="${id}"]`);
         const nameSpan = row.querySelector('.employee-name');
         const usernameSpan = row.querySelector('.employee-username');
-        const departmentSpan = row.querySelector('.employee-department');
+        const superiorSpan = row.querySelector('.employee-superior');
         const name = nameSpan.textContent;
         const username = usernameSpan.textContent;
-        const department = departmentSpan.textContent;
+        const superior = superiorSpan.textContent;
+
+        const superiorOptions = Array.from(document.querySelectorAll('#add-employee-form select[name="superior_id"] option'))
+            .map(option => `<option value="${option.value}" ${option.textContent === superior ? 'selected' : ''}>${option.textContent}</option>`)
+            .join('');
 
         row.innerHTML = `
             <td class="px-4 py-2">${id}</td>
@@ -102,13 +111,15 @@
                 <input type="text" value="${username}" class="border p-1 w-full" id="edit-username-${id}">
             </td>
             <td class="px-4 py-2">
-                <input type="text" value="${department}" class="border p-1 w-full" id="edit-department-${id}">
+                <select class="border p-1 w-full" id="edit-superior-${id}">
+                    ${superiorOptions}
+                </select>
             </td>
             <td class="px-4 py-2">
                 <button onclick="saveEmployee('${id}')" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded mr-2">
                     保存
                 </button>
-                <button onclick="cancelEdit('${id}', '${name}', '${username}', '${department}')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded">
+                <button onclick="cancelEdit('${id}', '${name}', '${username}', '${superior}')" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded">
                     取消
                 </button>
             </td>
@@ -118,7 +129,7 @@
     function saveEmployee(id) {
         const name = document.getElementById(`edit-name-${id}`).value;
         const username = document.getElementById(`edit-username-${id}`).value;
-        const department = document.getElementById(`edit-department-${id}`).value;
+        const superiorId = document.getElementById(`edit-superior-${id}`).value;
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/admin/employee';
@@ -127,19 +138,19 @@
             <input type="hidden" name="id" value="${id}">
             <input type="hidden" name="name" value="${name}">
             <input type="hidden" name="username" value="${username}">
-            <input type="hidden" name="department" value="${department}">
+            <input type="hidden" name="superior_id" value="${superiorId}">
         `;
         document.body.appendChild(form);
         form.submit();
     }
 
-    function cancelEdit(id, name, username, department) {
+    function cancelEdit(id, name, username, superior) {
         const row = document.querySelector(`.employee-row[data-id="${id}"]`);
         row.innerHTML = `
             <td class="px-4 py-2">${id}</td>
             <td class="px-4 py-2"><span class="employee-name">${name}</span></td>
             <td class="px-4 py-2"><span class="employee-username">${username}</span></td>
-            <td class="px-4 py-2"><span class="employee-department">${department}</span></td>
+            <td class="px-4 py-2"><span class="employee-superior">${superior}</span></td>
             <td class="px-4 py-2">
                 <button onclick="editEmployee('${id}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2">
                     编辑
@@ -157,4 +168,3 @@
     </script>
 </body>
 </html>
-

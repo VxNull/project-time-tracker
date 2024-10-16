@@ -1,33 +1,42 @@
 package models
 
 import (
+	"database/sql"
+
 	"github.com/VxNull/project-time-tracker/database"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Employee struct {
-	ID         int
-	Name       string
-	Username   string
-	Password   string
-	Department string
+	ID           int
+	Name         string
+	Username     string
+	Password     string
+	SuperiorID   sql.NullInt64
+	SuperiorName sql.NullString
 }
 
-func CreateEmployee(name, username, password, department string) error {
+func CreateEmployee(name, username, password string, superiorID *int) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	_, err = database.DB.Exec("INSERT INTO employees (name, username, password, department) VALUES (?, ?, ?, ?)",
-		name, username, string(hashedPassword), department)
+	var superiorIDValue sql.NullInt64
+	if superiorID != nil {
+		superiorIDValue.Int64 = int64(*superiorID)
+		superiorIDValue.Valid = true
+	}
+
+	_, err = database.DB.Exec("INSERT INTO employees (name, username, password, superior_id) VALUES (?, ?, ?, ?)",
+		name, username, string(hashedPassword), superiorIDValue)
 	return err
 }
 
 func GetEmployeeByUsername(username string) (*Employee, error) {
 	var e Employee
-	err := database.DB.QueryRow("SELECT id, name, username, password, department FROM employees WHERE username = ?", username).
-		Scan(&e.ID, &e.Name, &e.Username, &e.Password, &e.Department)
+	err := database.DB.QueryRow("SELECT id, name, username, password, superior_id FROM employees WHERE username = ?", username).
+		Scan(&e.ID, &e.Name, &e.Username, &e.Password, &e.SuperiorID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +45,8 @@ func GetEmployeeByUsername(username string) (*Employee, error) {
 
 func GetEmployeeByID(id int) (*Employee, error) {
 	var e Employee
-	err := database.DB.QueryRow("SELECT id, name, username, password, department FROM employees WHERE id = ?", id).
-		Scan(&e.ID, &e.Name, &e.Username, &e.Password, &e.Department)
+	err := database.DB.QueryRow("SELECT id, name, username, password, superior_id FROM employees WHERE id = ?", id).
+		Scan(&e.ID, &e.Name, &e.Username, &e.Password, &e.SuperiorID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +60,11 @@ func GetEmployeeCount() (int, error) {
 }
 
 func GetAllEmployees() ([]Employee, error) {
-	rows, err := database.DB.Query("SELECT id, name, username, department FROM employees")
+	rows, err := database.DB.Query(`
+		SELECT e.id, e.name, e.username, COALESCE(s.id, 0) as superior_id, COALESCE(s.name, '') as superior_name
+		FROM employees e
+		LEFT JOIN employees s ON e.superior_id = s.id
+	`)
 	if err != nil {
 		return nil, err
 	}
@@ -60,22 +73,24 @@ func GetAllEmployees() ([]Employee, error) {
 	var employees []Employee
 	for rows.Next() {
 		var e Employee
-		if err := rows.Scan(&e.ID, &e.Name, &e.Username, &e.Department); err != nil {
+		if err := rows.Scan(&e.ID, &e.Name, &e.Username, &e.SuperiorID, &e.SuperiorName); err != nil {
 			return nil, err
 		}
 		employees = append(employees, e)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
 	return employees, nil
 }
 
-func UpdateEmployee(id, name, username, department string) error {
-	_, err := database.DB.Exec("UPDATE employees SET name = ?, username = ?, department = ? WHERE id = ?",
-		name, username, department, id)
+func UpdateEmployee(id string, name, username string, superiorID *int) error {
+	var superiorIDValue sql.NullInt64
+	if superiorID != nil {
+		superiorIDValue.Int64 = int64(*superiorID)
+		superiorIDValue.Valid = true
+	}
+
+	_, err := database.DB.Exec("UPDATE employees SET name = ?, username = ?, superior_id = ? WHERE id = ?",
+		name, username, superiorIDValue, id)
 	return err
 }
 
