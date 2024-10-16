@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>员工仪表板</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
@@ -14,15 +14,14 @@
         
         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <h2 class="text-2xl font-bold mb-4">提交工时</h2>
-            <form id="timesheet-form" action="/employee/submit" method="POST">
+            <form action="/employee/submit" method="POST">
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="project">
                         项目
                     </label>
-                    <select id="project" name="project_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                        <option value="">选择项目</option>
+                    <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="project" name="project_id" required>
                         {{range .Projects}}
-                        <option value="{{.ID}}">{{.Name}} ({{.Code}})</option>
+                        <option value="{{.ID}}">{{.Name}}</option>
                         {{end}}
                     </select>
                 </div>
@@ -30,13 +29,13 @@
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="hours">
                         工时
                     </label>
-                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="hours" name="hours" type="number" step="0.5" min="0" max="24" required>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="hours" name="hours" type="number" step="0.5" min="0" required>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="date">
-                        日期
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="month">
+                        所属月份
                     </label>
-                    <input class="datepicker shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="date" name="date" type="text" required>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="month" name="month" type="text" required>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
@@ -57,19 +56,21 @@
             <table class="w-full">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">日期</th>
                         <th class="px-4 py-2">项目</th>
                         <th class="px-4 py-2">工时</th>
+                        <th class="px-4 py-2">月份</th>
                         <th class="px-4 py-2">描述</th>
+                        <th class="px-4 py-2">提交日期</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{range .Timesheets}}
                     <tr>
-                        <td class="border px-4 py-2">{{.Date.Format "2006-01-02"}}</td>
                         <td class="border px-4 py-2">{{.ProjectName}}</td>
                         <td class="border px-4 py-2">{{.Hours}}</td>
+                        <td class="border px-4 py-2">{{.Month.Format "2006-01"}}</td>
                         <td class="border px-4 py-2">{{.Description}}</td>
+                        <td class="border px-4 py-2">{{.SubmitDate.Format "2006-01-02 15:04:05"}}</td>
                     </tr>
                     {{end}}
                 </tbody>
@@ -77,9 +78,20 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script src="/static/js/app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr("#month", {
+            dateFormat: "Y-m",
+            plugins: [
+                new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",
+                    altFormat: "F Y",
+                    theme: "light"
+                })
+            ]
+        });
+    });
+    </script>
 </body>
 </html>
-

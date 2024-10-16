@@ -102,12 +102,12 @@ func SubmitTimesheet(w http.ResponseWriter, r *http.Request) {
 
 	projectID, _ := strconv.Atoi(r.FormValue("project_id"))
 	hours, _ := strconv.ParseFloat(r.FormValue("hours"), 64)
-	date, _ := time.Parse("2006-01-02", r.FormValue("date"))
+	month, _ := time.Parse("2006-01", r.FormValue("month"))
 	description := r.FormValue("description")
 
-	err := models.SubmitTimesheet(employeeID, projectID, hours, date, description)
+	err := models.SubmitTimesheet(employeeID, projectID, hours, month, description)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to submit timesheet: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

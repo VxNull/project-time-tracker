@@ -62,24 +62,21 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
-	// 获取项目数量
 	projectCount, err := models.GetProjectCount()
 	if err != nil {
-		http.Error(w, "获取项目数量失败", http.StatusInternalServerError)
+		http.Error(w, "获取项目数量失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// 获取员工数量
 	employeeCount, err := models.GetEmployeeCount()
 	if err != nil {
-		http.Error(w, "获取员工数量失败", http.StatusInternalServerError)
+		http.Error(w, "获取员工数量失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// 获取本月总工时
 	currentMonthHours, err := models.GetCurrentMonthTotalHours()
 	if err != nil {
-		http.Error(w, "获取本月总工时失败", http.StatusInternalServerError)
+		http.Error(w, "获取本月总工时失败: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -98,7 +95,12 @@ func AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, data)
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func ManageProject(w http.ResponseWriter, r *http.Request) {

@@ -21,7 +21,7 @@
             </div>
             <div class="bg-white p-4 rounded shadow">
                 <h2 class="text-xl font-semibold mb-2">本月总工时</h2>
-                <p class="text-3xl font-bold">{{.CurrentMonthHours}}</p>
+                <p class="text-3xl font-bold">{{printf "%.2f" .CurrentMonthHours}}</p>
             </div>
         </div>
 

@@ -37,8 +37,9 @@ func InitDB(dbPath string) error {
 			employee_id INTEGER,
 			project_id INTEGER,
 			hours REAL NOT NULL,
-			date DATE NOT NULL,
+			month DATE NOT NULL,
 			description TEXT,
+			submit_date DATETIME NOT NULL,
 			FOREIGN KEY (employee_id) REFERENCES employees (id),
 			FOREIGN KEY (project_id) REFERENCES projects (id)
 		);
