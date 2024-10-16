@@ -34,7 +34,7 @@
         
         <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
             <h2 class="text-2xl font-bold mb-6">提交工时</h2>
-            <form action="/employee/submit" method="POST" id="timesheetForm" class="space-y-6">
+            <form action="/employee/submit" method="POST" id="timesheetForm" class="space-y-6" onsubmit="return confirmSubmit();">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="project">
@@ -224,15 +224,48 @@
         updateMonthlyHours("{{.CurrentMonth}}");
     });
 
-    function editTimesheet(id, projectName, hours, month, description) {
-        const form = document.getElementById('timesheetForm');
-        form.action = `/employee/update/${id}`;
-        document.getElementById('project').value = projectName;
-        document.getElementById('hours').value = hours;
-        document.getElementById('month').value = month;
-        document.getElementById('description').value = description;
-        document.querySelector('button[type="submit"]').textContent = '更新工时';
-    }
+        // 编辑工时记录
+        function editTimesheet(id, projectName, hours, month, description) {
+            const form = document.getElementById('timesheetForm');
+            form.action = `/employee/update/${id}`;
+            document.getElementById('project').value = projectName;
+            document.getElementById('hours').value = hours;
+            document.getElementById('month').value = month;
+            document.getElementById('description').value = description;
+            document.querySelector('button[type="submit"]').textContent = '更新工时';
+
+            // 显示编辑模式提示
+            document.getElementById('editModeMessage').classList.remove('hidden');
+            
+            // 显示取消编辑按钮
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = '取消编辑';
+            cancelButton.className = 'bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded ml-4';
+            cancelButton.onclick = function() {
+                cancelEdit();
+            };
+            document.querySelector('.flex.items-center.justify-end.mt-6').appendChild(cancelButton);
+        }
+
+        function cancelEdit() {
+            // 清空表单
+            document.getElementById('timesheetForm').reset();
+            document.getElementById('editModeMessage').classList.add('hidden');
+            
+            // 移除取消编辑按钮
+            const cancelButton = document.querySelector('.flex.items-center.justify-end.mt-6 button:last-child');
+            if (cancelButton) {
+                cancelButton.remove();
+            }
+        }
+
+        // 确认提交
+        function confirmSubmit() {
+            return confirm("您确定要提交工时吗？");
+        }
     </script>
+    <div id="editModeMessage" class="hidden bg-yellow-200 text-yellow-800 p-2 rounded mb-4">
+        正在编辑工时记录，请完成编辑后提交或取消。
+    </div>
 </body>
 </html>
