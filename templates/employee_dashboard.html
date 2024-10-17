@@ -127,8 +127,8 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
         let hoursChart = null;
+    document.addEventListener('DOMContentLoaded', function() {
 
         const monthPicker = flatpickr("#month", {
             locale: "zh",
@@ -145,7 +145,13 @@
             }
         });
 
-        function updateMonthlyHours(month) {
+
+        // 初始加载当前月份的工时统计
+        updateMonthlyHours("{{.CurrentMonth}}");
+    });
+
+
+    function updateMonthlyHours(month) {
             fetch(`/employee/monthly-hours?month=${month}`)
                 .then(response => response.json())
                 .then(data => {
@@ -219,11 +225,6 @@
                     }
                 });
         }
-
-        // 初始加载当前月份的工时统计
-        updateMonthlyHours("{{.CurrentMonth}}");
-    });
-
         // 编辑工时记录
         function editTimesheet(id, projectName, hours, month, description) {
             // 如果当前按钮是更新工时，则不进行编辑
@@ -263,6 +264,9 @@
                 cancelEdit();
             };
             document.querySelector('.flex.items-center.justify-end.mt-6').appendChild(cancelButton);
+
+            // 刷新加载当前月份的工时统计
+            updateMonthlyHours(month);
         }
 
         function cancelEdit() {
