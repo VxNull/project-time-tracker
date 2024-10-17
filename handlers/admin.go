@@ -1,17 +1,15 @@
 package handlers
 
 import (
-	"encoding/csv"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/VxNull/project-time-tracker/database"
 	"github.com/VxNull/project-time-tracker/models"
 	"github.com/VxNull/project-time-tracker/store"
+	"github.com/xuri/excelize/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -244,48 +242,53 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 }
 
 func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
-	startDate := r.FormValue("start_date")
-	endDate := r.FormValue("end_date")
+	if r.Method == "POST" {
+		startDate := r.FormValue("start_date")
+		endDate := r.FormValue("end_date")
 
-	// 从数据库获取工时数据
-	rows, err := database.DB.Query(`
-		SELECT e.name, p.name, t.hours, t.date
-		FROM timesheets t
-		JOIN employees e ON t.employee_id = e.id
-		JOIN projects p ON t.project_id = p.id
-		WHERE t.date BETWEEN ? AND ?
-	`, startDate, endDate)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+		start, _ := time.Parse("2006-01-02", startDate)
+		end, _ := time.Parse("2006-01-02", endDate)
 
-	// 设置响应头,使浏览器下载文件
-	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=timesheet_%s_%s.csv", startDate, endDate))
-
-	// 创建CSV writer
-	csvWriter := csv.NewWriter(w)
-	defer csvWriter.Flush()
-
-	// 写入CSV头
-	csvWriter.Write([]string{"员工姓名", "项目名称", "工时", "日期"})
-
-	// 写入数据
-	for rows.Next() {
-		var employeeName, projectName string
-		var hours float64
-		var date time.Time
-		if err := rows.Scan(&employeeName, &projectName, &hours, &date); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 获取工时数据
+		timesheets, err := models.GetTimesheetsByDateRange(start, end)
+		if err != nil {
+			http.Error(w, "获取工时数据失败", http.StatusInternalServerError)
 			return
 		}
-		csvWriter.Write([]string{
-			employeeName,
-			projectName,
-			fmt.Sprintf("%.2f", hours),
-			date.Format("2006-01-02"),
-		})
+
+		// 创建 Excel 文件
+		f := excelize.NewFile()
+		sheetName := "工时数据"
+		f.NewSheet(sheetName)
+
+		// 写入表头
+		f.SetCellValue(sheetName, "A1", "员工ID")
+		f.SetCellValue(sheetName, "B1", "项目ID")
+		f.SetCellValue(sheetName, "C1", "工时")
+		f.SetCellValue(sheetName, "D1", "月份")
+		f.SetCellValue(sheetName, "E1", "描述")
+
+		// 写入数据
+		for i, ts := range timesheets {
+			f.SetCellValue(sheetName, "A"+strconv.Itoa(i+2), ts.EmployeeID)
+			f.SetCellValue(sheetName, "B"+strconv.Itoa(i+2), ts.ProjectID)
+			f.SetCellValue(sheetName, "C"+strconv.Itoa(i+2), ts.Hours)
+			f.SetCellValue(sheetName, "D"+strconv.Itoa(i+2), ts.Month.Format("2006-01"))
+			f.SetCellValue(sheetName, "E"+strconv.Itoa(i+2), ts.Description)
+		}
+
+		// 设置响应头
+		w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		w.Header().Set("Content-Disposition", "attachment; filename=timesheet.xlsx")
+
+		// 写入文件到响应
+		if err := f.Write(w); err != nil {
+			http.Error(w, "导出 Excel 失败", http.StatusInternalServerError)
+			return
+		}
+		return
 	}
+
+	// 处理 GET 请求，渲染导出页面
+	http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
 }

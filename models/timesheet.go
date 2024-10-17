@@ -112,3 +112,26 @@ func UpdateTimesheet(id string, employeeID, projectID int, hours float64, month 
 	`, projectID, hours, month, description, id, employeeID)
 	return err
 }
+
+func GetTimesheetsByDateRange(start, end time.Time) ([]Timesheet, error) {
+	rows, err := database.DB.Query(`
+		SELECT id, employee_id, project_id, hours, month, description
+		FROM timesheets
+		WHERE month BETWEEN ? AND ?
+	`, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var timesheets []Timesheet
+	for rows.Next() {
+		var t Timesheet
+		if err := rows.Scan(&t.ID, &t.EmployeeID, &t.ProjectID, &t.Hours, &t.Month, &t.Description); err != nil {
+			return nil, err
+		}
+		timesheets = append(timesheets, t)
+	}
+
+	return timesheets, nil
+}
