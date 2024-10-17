@@ -14,10 +14,8 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-4">管理员仪表板</h1>
-        
-        <!-- 退出按钮 -->
-        <div class="flex justify-end mb-4">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold">管理员仪表板</h1>
             <a href="/admin/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                 退出
             </a>
@@ -39,7 +37,10 @@
         </div>
 
         <div class="bg-white p-4 rounded shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">导出工时表</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">导出工时表</h2>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">导出</button>
+            </div>
             <form action="/admin/export" method="POST" class="space-y-4" id="exportForm">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -51,11 +52,9 @@
                         <input type="text" id="end_month" name="end_month" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required readonly>
                     </div>
                 </div>
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">导出</button>
             </form>
 
             <div class="mt-6">
-                <h3 class="text-lg font-semibold mb-2">工时数据图表</h3>
                 <canvas id="timesheetChart"></canvas>
                 <div id="totalHours" class="mt-2 text-right font-bold"></div>
             </div>
@@ -72,6 +71,8 @@
     </div>
 
     <script>
+        let timesheetChart; // 声明图表实例
+    
         document.addEventListener('DOMContentLoaded', function() {
             const startMonthPicker = flatpickr("#start_month", {
                 locale: "zh",
@@ -88,7 +89,7 @@
                     updateChartData();
                 }
             });
-
+    
             const endMonthPicker = flatpickr("#end_month", {
                 locale: "zh",
                 plugins: [new monthSelectPlugin({
@@ -105,29 +106,46 @@
                 }
             });
         });
-
+    
         function updateChartData() {
             const startMonth = document.getElementById('start_month').value;
             const endMonth = document.getElementById('end_month').value;
-
+    
             if (startMonth && endMonth) {
                 fetch(`/admin/get-timesheet-data?start_month=${startMonth}&end_month=${endMonth}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('网络响应不正常');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        // 检查数据是否有效
+                        if (!data || data.length === 0) {
+                            console.error('没有获取到工时数据');
+                            document.getElementById('totalHours').textContent = '总工时: 0 小时';
+                            return;
+                        }
+    
                         const labels = data.map(item => item.projectName);
                         const hours = data.map(item => item.hours);
                         const totalHours = data.reduce((sum, item) => sum + item.hours, 0);
-
+    
+                        // 销毁旧的图表实例
+                        if (timesheetChart) {
+                            timesheetChart.destroy();
+                        }
+    
                         const ctx = document.getElementById('timesheetChart').getContext('2d');
-                        const chart = new Chart(ctx, {
+                        timesheetChart = new Chart(ctx, {
                             type: 'bar',
                             data: {
                                 labels: labels,
                                 datasets: [{
                                     label: '工时',
                                     data: hours,
-                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(0, 0, 192, 0.2)',
+                                    borderColor: 'rgba(0, 0, 192, 1)',
                                     borderWidth: 1
                                 }]
                             },
@@ -144,11 +162,12 @@
                                 }
                             }
                         });
-
+    
                         document.getElementById('totalHours').textContent = `总工时: ${totalHours} 小时`;
                     })
                     .catch(error => {
                         console.error('获取工时数据失败:', error);
+                        document.getElementById('totalHours').textContent = '总工时: 0 小时';
                     });
             }
         }
