@@ -55,8 +55,10 @@
             </form>
 
             <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">工时数据图表</h3>
                 <canvas id="timesheetChart"></canvas>
                 <div id="totalHours" class="mt-2 text-right font-bold"></div>
+                <div id="errorMessage" class="mt-2 text-red-500 hidden"></div> <!-- 错误消息 -->
             </div>
         </div>
 
@@ -72,8 +74,17 @@
 
     <script>
         let timesheetChart; // 声明图表实例
-    
+
         document.addEventListener('DOMContentLoaded', function() {
+            // 获取当前年份和月份
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1; // 月份从0开始
+
+            // 设置默认值
+            document.getElementById('start_month').value = `${currentYear}-01`;
+            document.getElementById('end_month').value = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
             const startMonthPicker = flatpickr("#start_month", {
                 locale: "zh",
                 plugins: [new monthSelectPlugin({
@@ -89,7 +100,7 @@
                     updateChartData();
                 }
             });
-    
+
             const endMonthPicker = flatpickr("#end_month", {
                 locale: "zh",
                 plugins: [new monthSelectPlugin({
@@ -105,12 +116,14 @@
                     updateChartData();
                 }
             });
+
+            // 刷新图表显示
+            updateChartData();
         });
-    
         function updateChartData() {
             const startMonth = document.getElementById('start_month').value;
             const endMonth = document.getElementById('end_month').value;
-    
+
             if (startMonth && endMonth) {
                 fetch(`/admin/get-timesheet-data?start_month=${startMonth}&end_month=${endMonth}`)
                     .then(response => {
@@ -124,18 +137,27 @@
                         if (!data || data.length === 0) {
                             console.error('没有获取到工时数据');
                             document.getElementById('totalHours').textContent = '总工时: 0 小时';
+                            
+                            // 删除图表并显示错误信息
+                            if (timesheetChart) {
+                                timesheetChart.destroy();
+                                timesheetChart = null; // 清空图表实例
+                            }
+                            document.getElementById('timesheetChart').style.display = 'none'; // 隐藏图表
+                            document.getElementById('errorMessage').textContent = '没有获取到工时数据，请检查选择的时间段。';
+                            document.getElementById('errorMessage').classList.remove('hidden');
                             return;
                         }
-    
+
                         const labels = data.map(item => item.projectName);
                         const hours = data.map(item => item.hours);
                         const totalHours = data.reduce((sum, item) => sum + item.hours, 0);
-    
+
                         // 销毁旧的图表实例
                         if (timesheetChart) {
                             timesheetChart.destroy();
                         }
-    
+
                         const ctx = document.getElementById('timesheetChart').getContext('2d');
                         timesheetChart = new Chart(ctx, {
                             type: 'bar',
@@ -162,15 +184,26 @@
                                 }
                             }
                         });
-    
+
                         document.getElementById('totalHours').textContent = `总工时: ${totalHours} 小时`;
+                        document.getElementById('errorMessage').classList.add('hidden'); // 隐藏错误消息
+                        document.getElementById('timesheetChart').style.display = 'block'; // 显示图表
                     })
                     .catch(error => {
                         console.error('获取工时数据失败:', error);
                         document.getElementById('totalHours').textContent = '总工时: 0 小时';
+                        
+                        // 删除图表并显示错误信息
+                        if (timesheetChart) {
+                            timesheetChart.destroy();
+                            timesheetChart = null; // 清空图表实例
+                        }
+                        document.getElementById('timesheetChart').style.display = 'none'; // 隐藏图表
+                        document.getElementById('errorMessage').textContent = '获取工时数据失败，请稍后重试。';
+                        document.getElementById('errorMessage').classList.remove('hidden');
                     });
             }
         }
-    </script>
+   </script>
 </body>
 </html>

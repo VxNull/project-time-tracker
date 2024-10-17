@@ -299,6 +299,12 @@ func GetTimesheetData(w http.ResponseWriter, r *http.Request) {
 	start, _ := time.Parse("2006-01", startMonth)
 	end, _ := time.Parse("2006-01", endMonth)
 
+	// 修改start的日期值为1号，end的日期值为最后一天
+	start = time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, start.Location())
+
+	daysInMonth := time.Date(end.Year(), end.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	end = time.Date(end.Year(), end.Month(), daysInMonth, 23, 59, 59, 0, end.Location())
+
 	// 获取工时数据
 	timesheets, err := models.GetTimesheetsByDateRange(start, end)
 	if err != nil {
