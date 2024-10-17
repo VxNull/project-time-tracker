@@ -40,7 +40,7 @@
 
         <div class="bg-white p-4 rounded shadow mb-8">
             <h2 class="text-xl font-semibold mb-4">导出工时表</h2>
-            <form action="/admin/export" method="POST" class="space-y-4">
+            <form action="/admin/export" method="POST" class="space-y-4" id="exportForm">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="start_month">开始月份</label>
@@ -53,11 +53,12 @@
                 </div>
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">导出</button>
             </form>
-        </div>
 
-        <div class="bg-white p-4 rounded shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">工时数据图表</h2>
-            <canvas id="timesheetChart"></canvas>
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">工时数据图表</h3>
+                <canvas id="timesheetChart"></canvas>
+                <div id="totalHours" class="mt-2 text-right font-bold"></div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -84,6 +85,7 @@
                 onChange: function(selectedDates, dateStr) {
                     // 处理开始月份选择
                     console.log("开始月份选择:", dateStr);
+                    updateChartData();
                 }
             });
 
@@ -99,9 +101,57 @@
                 onChange: function(selectedDates, dateStr) {
                     // 处理结束月份选择
                     console.log("结束月份选择:", dateStr);
+                    updateChartData();
                 }
             });
         });
+
+        function updateChartData() {
+            const startMonth = document.getElementById('start_month').value;
+            const endMonth = document.getElementById('end_month').value;
+
+            if (startMonth && endMonth) {
+                fetch(`/admin/get-timesheet-data?start_month=${startMonth}&end_month=${endMonth}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const labels = data.map(item => item.projectName);
+                        const hours = data.map(item => item.hours);
+                        const totalHours = data.reduce((sum, item) => sum + item.hours, 0);
+
+                        const ctx = document.getElementById('timesheetChart').getContext('2d');
+                        const chart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: '工时',
+                                    data: hours,
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: '工时'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        document.getElementById('totalHours').textContent = `总工时: ${totalHours} 小时`;
+                    })
+                    .catch(error => {
+                        console.error('获取工时数据失败:', error);
+                    });
+            }
+        }
     </script>
 </body>
 </html>

@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -288,4 +290,52 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 
 	// 处理 GET 请求，渲染导出页面
 	http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+}
+
+func GetTimesheetData(w http.ResponseWriter, r *http.Request) {
+	startMonth := r.URL.Query().Get("start_month")
+	endMonth := r.URL.Query().Get("end_month")
+
+	start, _ := time.Parse("2006-01", startMonth)
+	end, _ := time.Parse("2006-01", endMonth)
+
+	// 获取工时数据
+	timesheets, err := models.GetTimesheetsByDateRange(start, end)
+	if err != nil {
+		http.Error(w, "获取工时数据失败", http.StatusInternalServerError)
+		return
+	}
+
+	// 统计每个项目的工时
+	projectHours := make(map[string]float64)
+	for _, ts := range timesheets {
+		project, err := models.GetProjectByID(ts.ProjectID)
+		if err == nil {
+			projectHours[project.Name] += ts.Hours
+		}
+	}
+
+	// 转换为可返回的格式
+	var result []struct {
+		ProjectName string  `json:"projectName"`
+		Hours       float64 `json:"hours"`
+	}
+
+	for projectName, hours := range projectHours {
+		result = append(result, struct {
+			ProjectName string  `json:"projectName"`
+			Hours       float64 `json:"hours"`
+		}{
+			ProjectName: projectName,
+			Hours:       hours,
+		})
+	}
+
+	// 按工时从高到低排序
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Hours > result[j].Hours
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
