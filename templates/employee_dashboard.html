@@ -177,8 +177,8 @@
                                 datasets: [{
                                     label: '工时',
                                     data: hours,
-                                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    backgroundColor: 'rgba(0, 0, 192, 0.6)',
+                                    borderColor: 'rgba(0, 0, 192, 1)',
                                     borderWidth: 1
                                 }]
                             },
@@ -232,7 +232,15 @@
             }
             const form = document.getElementById('timesheetForm');
             form.action = `/employee/update/${id}`;
-            document.getElementById('project').value = projectName;
+            // 设置项目select的值，选中相同projectName的option，如果找不到，则不选中
+            const projectSelect = document.getElementById('project');
+            const projectOption = Array.from(projectSelect.options).find(option => option.text === projectName);
+            if (projectOption) {
+                projectSelect.value = projectOption.value;
+            }else{
+                projectSelect.value = '';
+            }
+
             document.getElementById('hours').value = hours;
             document.getElementById('month').value = month;
             document.getElementById('description').value = description;
@@ -262,7 +270,7 @@
             document.getElementById('timesheetForm').reset();
             document.getElementById('editModeMessage').classList.add('hidden');
 
-            // 遍滤查找已高亮的条目，取消高亮显示
+            // 遍滤查条目，取消高亮显示
             const rows = document.querySelectorAll('tr');
             rows.forEach(row => {
                 row.style.backgroundColor = ''; // 恢复默认背景
