@@ -5,18 +5,102 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>项目工时统计系统</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .tab-content {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            background: white;
+            position: relative; /* 使切换链接相对定位 */
+        }
+        .toggle-link {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            color: #4a5568; /* 深灰色文字 */
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .toggle-link:hover {
+            color: #2b6cb0; /* 悬停时变为蓝色 */
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
         <h1 class="text-3xl font-bold mb-4">欢迎使用项目工时统计系统</h1>
-        <div class="flex space-x-4">
-            <a href="/employee/login" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                员工登录
-            </a>
-            <a href="/admin/login" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                管理员登录
-            </a>
+        
+        <div class="tab-content">
+            <div class="employee-login">
+                <h2 class="text-2xl font-bold mb-4">员工登录</h2>
+                <form action="/employee/login" method="POST" class="space-y-4">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+                            用户名
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" name="username" type="text" placeholder="用户名" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                            密码
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="password" name="password" type="password" placeholder="******************" required>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                            登录
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-login hidden">
+                <h2 class="text-2xl font-bold mb-4">管理员登录</h2>
+                <form action="/admin/login" method="POST" class="space-y-4">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="admin-username">
+                            用户名
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="admin-username" name="username" type="text" placeholder="用户名" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="admin-password">
+                            密码
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" id="admin-password" name="password" type="password" placeholder="******************" required>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                            登录
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <span class="toggle-link" id="toggle-login">切换到管理员登录</span>
         </div>
     </div>
+
+    <script>
+        const toggleLink = document.getElementById('toggle-login');
+        const employeeLogin = document.querySelector('.employee-login');
+        const adminLogin = document.querySelector('.admin-login');
+
+        toggleLink.addEventListener('click', () => {
+            if (adminLogin.classList.contains('hidden')) {
+                adminLogin.classList.remove('hidden');
+                employeeLogin.classList.add('hidden');
+                toggleLink.textContent = '切换到员工登录';
+            } else {
+                employeeLogin.classList.remove('hidden');
+                adminLogin.classList.add('hidden');
+                toggleLink.textContent = '切换到管理员登录';
+            }
+        });
+    </script>
 </body>
 </html>
