@@ -19,13 +19,9 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		employee, err := models.GetEmployeeByUsername(username)
-		if err != nil {
-			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
-			return
-		}
-
-		if err := bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(password)); err != nil {
-			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
+		if err != nil || bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(password)) != nil {
+			// 鉴权失败，跳转到首页
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -37,16 +33,8 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("templates/employee_login.html")
-	if err != nil {
-		http.Error(w, "模板加载失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// 直接跳转到首页
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {

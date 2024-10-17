@@ -16,21 +16,14 @@ import (
 )
 
 func AdminLogin(w http.ResponseWriter, r *http.Request) {
-	log.Println("访问管理员登录页面")
-
 	if r.Method == "POST" {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
 		admin, err := models.GetAdminByUsername(username)
-		if err != nil {
-			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
-			return
-		}
-
-		err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password))
-		if err != nil {
-			http.Error(w, "用户名或密码错误", http.StatusUnauthorized)
+		if err != nil || bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password)) != nil {
+			// 鉴权失败，跳转到首页
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
@@ -42,23 +35,8 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("尝试加载模板")
-	tmpl, err := template.ParseFiles("templates/admin_login.html")
-	if err != nil {
-		log.Printf("模板加载失败: %v", err)
-		http.Error(w, "模板加载失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Println("尝试渲染模板")
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		log.Printf("模板渲染失败: %v", err)
-		http.Error(w, "模板渲染失败: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Println("管理员登录页面渲染完成")
+	// 直接跳转到首页
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func AdminDashboard(w http.ResponseWriter, r *http.Request) {
