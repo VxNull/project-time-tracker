@@ -31,6 +31,7 @@ func main() {
 	http.HandleFunc("/", handlers.Home)
 	http.HandleFunc("/admin/login", handlers.AdminLogin)
 	http.HandleFunc("/admin/dashboard", middleware.AdminAuthMiddleware(handlers.AdminDashboard))
+	http.HandleFunc("/admin/logout", handlers.AdminLogout) // 添加退出路由
 	http.HandleFunc("/admin/project", middleware.AdminAuthMiddleware(handlers.ManageProject))
 	http.HandleFunc("/admin/employee", middleware.AdminAuthMiddleware(handlers.ManageEmployee))
 	http.HandleFunc("/admin/export", middleware.AdminAuthMiddleware(handlers.ExportTimesheet))

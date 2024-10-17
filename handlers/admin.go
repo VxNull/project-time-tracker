@@ -15,6 +15,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func AdminLogout(w http.ResponseWriter, r *http.Request) {
+	// 清除会话
+	session, _ := store.Store.Get(r, "session")
+	delete(session.Values, "admin")
+	session.Save(r, w)
+
+	// 重定向到首页
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func AdminLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		username := r.FormValue("username")
