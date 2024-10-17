@@ -103,7 +103,7 @@
                     </thead>
                     <tbody>
                         {{range .Timesheets}}
-                        <tr class="border-b">
+                        <tr class="border-b" data-id="{{.ID}}" >
                             <td class="px-4 py-2">{{.ProjectName}}</td>
                             <td class="px-4 py-2">{{.Hours}}</td>
                             <td class="px-4 py-2">{{.Month.Format "2006-01"}}</td>
@@ -226,6 +226,10 @@
 
         // 编辑工时记录
         function editTimesheet(id, projectName, hours, month, description) {
+            // 如果当前按钮是更新工时，则不进行编辑
+            if (document.querySelector('button[type="submit"]').textContent === '更新工时') {
+                return;
+            }
             const form = document.getElementById('timesheetForm');
             form.action = `/employee/update/${id}`;
             document.getElementById('project').value = projectName;
@@ -233,6 +237,12 @@
             document.getElementById('month').value = month;
             document.getElementById('description').value = description;
             document.querySelector('button[type="submit"]').textContent = '更新工时';
+
+            // 高亮显示要编辑的条目
+            const row = document.querySelector(`tr[data-id="${id}"]`);
+            if (row) {
+                row.style.backgroundColor = '#ffff99'; // 黄色背景
+            }
 
             // 显示编辑模式提示
             document.getElementById('editModeMessage').classList.remove('hidden');
@@ -251,7 +261,14 @@
             // 清空表单
             document.getElementById('timesheetForm').reset();
             document.getElementById('editModeMessage').classList.add('hidden');
-            
+
+            // 遍滤查找已高亮的条目，取消高亮显示
+            const rows = document.querySelectorAll('tr');
+            rows.forEach(row => {
+                row.style.backgroundColor = ''; // 恢复默认背景
+            });
+
+            document.querySelector('button[type="submit"]').textContent = '提交工时';
             // 移除取消编辑按钮
             const cancelButton = document.querySelector('.flex.items-center.justify-end.mt-6 button:last-child');
             if (cancelButton) {
