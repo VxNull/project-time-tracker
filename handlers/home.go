@@ -11,6 +11,12 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 获取错误信息
+	errorMessage := r.URL.Query().Get("error")
+
+	// 渲染模板并传递错误信息
 	tmpl := template.Must(template.ParseFiles("templates/home.html"))
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, map[string]interface{}{
+		"ErrorMessage": errorMessage,
+	})
 }

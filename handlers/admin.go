@@ -22,8 +22,8 @@ func AdminLogin(w http.ResponseWriter, r *http.Request) {
 
 		admin, err := models.GetAdminByUsername(username)
 		if err != nil || bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password)) != nil {
-			// 鉴权失败，跳转到首页
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			// 鉴权失败，跳转到首页并传递错误信息
+			http.Redirect(w, r, "/?error=用户名或密码错误", http.StatusSeeOther)
 			return
 		}
 

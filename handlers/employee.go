@@ -20,8 +20,8 @@ func EmployeeLogin(w http.ResponseWriter, r *http.Request) {
 
 		employee, err := models.GetEmployeeByUsername(username)
 		if err != nil || bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(password)) != nil {
-			// 鉴权失败，跳转到首页
-			http.Redirect(w, r, "/", http.StatusSeeOther)
+			// 鉴权失败，跳转到首页并传递错误信息
+			http.Redirect(w, r, "/?error=用户名或密码错误", http.StatusSeeOther)
 			return
 		}
 
