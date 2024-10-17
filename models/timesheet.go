@@ -51,13 +51,17 @@ func GetTimesheetsByEmployee(employeeID int) ([]Timesheet, error) {
 func GetCurrentMonthTotalHours() (float64, error) {
 	var totalHours float64
 	currentYear, currentMonth, _ := time.Now().Date()
-	currentMonthStart := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.Local)
+
+	// 获取当月1号
+	currentMonthStart := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.Now().Location())
+	// 获取下月1号
+	currentMonthEnd := currentMonthStart.AddDate(0, 1, 0).Add(-time.Second)
 
 	err := database.DB.QueryRow(`
 		SELECT COALESCE(SUM(hours), 0) 
 		FROM timesheets 
-		WHERE month = ?
-	`, currentMonthStart.Format("2006-01")).Scan(&totalHours)
+		WHERE month BETWEEN ? AND ?
+	`, currentMonthStart.Format("2006-01-02"), currentMonthEnd.Format("2006-01-02")).Scan(&totalHours)
 
 	if err != nil {
 		return 0, fmt.Errorf("计算本月总工时失败: %v", err)
