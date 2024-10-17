@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理员仪表板</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
@@ -36,14 +41,14 @@
         <div class="bg-white p-4 rounded shadow mb-8">
             <h2 class="text-xl font-semibold mb-4">导出工时表</h2>
             <form action="/admin/export" method="POST" class="space-y-4">
-                <div class="flex space-x-4">
-                    <div class="flex-1">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="start_date">开始日期</label>
-                        <input type="date" id="start_date" name="start_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="start_month">开始月份</label>
+                        <input type="text" id="start_month" name="start_month" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required readonly>
                     </div>
-                    <div class="flex-1">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="end_date">结束日期</label>
-                        <input type="date" id="end_date" name="end_date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="end_month">结束月份</label>
+                        <input type="text" id="end_month" name="end_month" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required readonly>
                     </div>
                 </div>
                 <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">导出</button>
@@ -66,34 +71,37 @@
     </div>
 
     <script>
-        // 示例数据，实际数据应从后端获取
-        const timesheetData = {
-            labels: ['一月', '二月', '三月', '四月', '五月', '六月'],
-            datasets: [{
-                label: '工时',
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        const config = {
-            type: 'bar',
-            data: timesheetData,
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        document.addEventListener('DOMContentLoaded', function() {
+            const startMonthPicker = flatpickr("#start_month", {
+                locale: "zh",
+                plugins: [new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",
+                    altFormat: "Y年m月",
+                    theme: "light"
+                })],
+                static: true,
+                onChange: function(selectedDates, dateStr) {
+                    // 处理开始月份选择
+                    console.log("开始月份选择:", dateStr);
                 }
-            }
-        };
+            });
 
-        const timesheetChart = new Chart(
-            document.getElementById('timesheetChart'),
-            config
-        );
+            const endMonthPicker = flatpickr("#end_month", {
+                locale: "zh",
+                plugins: [new monthSelectPlugin({
+                    shorthand: true,
+                    dateFormat: "Y-m",
+                    altFormat: "Y年m月",
+                    theme: "light"
+                })],
+                static: true,
+                onChange: function(selectedDates, dateStr) {
+                    // 处理结束月份选择
+                    console.log("结束月份选择:", dateStr);
+                }
+            });
+        });
     </script>
 </body>
 </html>

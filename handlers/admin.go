@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -66,27 +67,22 @@ func AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
-		ProjectCount      int
-		EmployeeCount     int
-		CurrentMonthHours float64
-	}{
-		ProjectCount:      projectCount,
-		EmployeeCount:     employeeCount,
-		CurrentMonthHours: currentMonthHours,
+	// 生成月份选项
+	months := []string{}
+	for year := 2020; year <= time.Now().Year(); year++ {
+		for month := 1; month <= 12; month++ {
+			months = append(months, strconv.Itoa(year)+"-"+fmt.Sprintf("%02d", month))
+		}
 	}
 
-	tmpl, err := template.ParseFiles("templates/admin_dashboard.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// 渲染模板
+	tmpl := template.Must(template.ParseFiles("templates/admin_dashboard.html"))
+	tmpl.Execute(w, map[string]interface{}{
+		"ProjectCount":      projectCount,
+		"EmployeeCount":     employeeCount,
+		"CurrentMonthHours": currentMonthHours,
+		"Months":            months,
+	})
 }
 
 func ManageProject(w http.ResponseWriter, r *http.Request) {
@@ -243,11 +239,12 @@ func ManageEmployee(w http.ResponseWriter, r *http.Request) {
 
 func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
-		startDate := r.FormValue("start_date")
-		endDate := r.FormValue("end_date")
+		startMonth := r.FormValue("start_month")
+		endMonth := r.FormValue("end_month")
 
-		start, _ := time.Parse("2006-01-02", startDate)
-		end, _ := time.Parse("2006-01-02", endDate)
+		// 解析开始和结束月份
+		start, _ := time.Parse("2006-01", startMonth)
+		end, _ := time.Parse("2006-01", endMonth)
 
 		// 获取工时数据
 		timesheets, err := models.GetTimesheetsByDateRange(start, end)
