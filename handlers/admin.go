@@ -255,8 +255,24 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		// 创建综合统计工作表
 		summarySheet := "综合统计"
 		f.NewSheet(summarySheet)
+		// 删除默认的Sheet1
+		f.DeleteSheet("Sheet1")
+
+		// 设置列宽
+		f.SetColWidth(summarySheet, "A", "A", 20)
+		f.SetColWidth(summarySheet, "B", "Z", 15)
 
 		// 设置综合统计表头
+		headerStyle, _ := f.NewStyle(&excelize.Style{
+			Font:      &excelize.Font{Bold: true, Size: 12},
+			Fill:      excelize.Fill{Type: "pattern", Color: []string{"#DDEBF7"}, Pattern: 1},
+			Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+			Border: []excelize.Border{{Type: "left", Color: "#000000", Style: 1},
+				{Type: "top", Color: "#000000", Style: 1},
+				{Type: "bottom", Color: "#000000", Style: 1},
+				{Type: "right", Color: "#000000", Style: 1}},
+		})
+		f.SetCellStyle(summarySheet, "A1", "B1", headerStyle)
 		f.SetCellValue(summarySheet, "A1", "统计项目")
 		f.SetCellValue(summarySheet, "B1", "数值")
 
@@ -342,6 +358,7 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		row := 7
 
 		// 设置表头
+		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), headerStyle)
 		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "项目名称")
 		for col, month := range months {
 			f.SetCellValue(summarySheet, getColumnName(col+1+1)+strconv.Itoa(row), month.Format("2006-01"))
@@ -350,8 +367,15 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		row++
 
 		// 填充项目工时数据
+		contentStyle, _ := f.NewStyle(&excelize.Style{
+			Border: []excelize.Border{{Type: "left", Color: "#000000", Style: 1},
+				{Type: "top", Color: "#000000", Style: 1},
+				{Type: "bottom", Color: "#000000", Style: 1},
+				{Type: "right", Color: "#000000", Style: 1}},
+		})
 		projects, _ := models.GetAllProjects()
 		for _, project := range projects {
+			f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), contentStyle)
 			f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), project.Name)
 			totalProjectHours := 0.0
 			for col, month := range months {
@@ -365,6 +389,7 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 添加月度总计行
+		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), headerStyle)
 		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "月度总计")
 		for col, month := range months {
 			monthStr := month.Format("2006-01")
@@ -373,11 +398,13 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		f.SetCellValue(summarySheet, getColumnName(len(months)+2)+strconv.Itoa(row), totalHours)
 
 		// 添加员工工时统计
-		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row+2), "员工工时统计")
-		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row+3), "员工姓名")
-		f.SetCellValue(summarySheet, "B"+strconv.Itoa(row+3), "工时")
-		row += 4
+		row += 2
+		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), "B"+strconv.Itoa(row), headerStyle)
+		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "员工工时统计")
+		f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), "工时")
+		row++
 		for employeeID, hours := range employeeTotalHours {
+			f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), "B"+strconv.Itoa(row), contentStyle)
 			employee, _ := models.GetEmployeeByID(employeeID)
 			f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), employee.Name)
 			f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), hours)
