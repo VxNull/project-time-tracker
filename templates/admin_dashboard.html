@@ -79,13 +79,15 @@
                 <canvas id="timesheetChart"></canvas>
                 <div id="totalHours" class="mt-4 text-right font-bold text-lg text-gray-700"></div>
                 <div id="errorMessage" class="mt-2 text-red-500 hidden"></div>
+                <canvas id="employeeTimesheetChart"></canvas>
+                <div id="employeeTotalHours" class="mt-4 text-right font-bold text-lg text-gray-700"></div>
             </div>
         </div>
     </div>
 
     <script>
         let timesheetChart; // 声明图表实例
-
+        let employeeTimesheetChart; // 声明员工图表实例
         document.addEventListener('DOMContentLoaded', function() {
             // 获取当前年份和月份
             const currentDate = new Date();
@@ -145,24 +147,31 @@
                     })
                     .then(data => {
                         // 检查数据是否有效
-                        if (!data || data.length === 0) {
+                        if (!data || (!data.projectHours || data.projectHours.length === 0) && (!data.employeeHours || data.employeeHours.length === 0)) {
                             console.error('没有获取到工时数据');
                             document.getElementById('totalHours').textContent = '总工时: 0 小时';
+                            document.getElementById('employeeTotalHours').textContent = '总工时: 0 小时';
                             
                             // 删除图表并显示错误信息
                             if (timesheetChart) {
                                 timesheetChart.destroy();
-                                timesheetChart = null; // 清空图表实例
+                                timesheetChart = null;
                             }
-                            document.getElementById('timesheetChart').style.display = 'none'; // 隐藏图表
+                            if (employeeTimesheetChart) {
+                                employeeTimesheetChart.destroy();
+                                employeeTimesheetChart = null;
+                            }
+                            document.getElementById('timesheetChart').style.display = 'none';
+                            document.getElementById('employeeTimesheetChart').style.display = 'none';
                             document.getElementById('errorMessage').textContent = '没有获取到工时数据，请检查选择的时间段。';
                             document.getElementById('errorMessage').classList.remove('hidden');
                             return;
                         }
 
-                        const labels = data.map(item => item.projectName);
-                        const hours = data.map(item => item.hours);
-                        const totalHours = data.reduce((sum, item) => sum + item.hours, 0);
+                        // 项目工时图表
+                        const projectLabels = data.projectHours.map(item => item.projectName);
+                        const projectHours = data.projectHours.map(item => item.hours);
+                        const projectTotalHours = data.projectHours.reduce((sum, item) => sum + item.hours, 0);
 
                         // 销毁旧的图表实例
                         if (timesheetChart) {
@@ -173,10 +182,10 @@
                         timesheetChart = new Chart(ctx, {
                             type: 'bar',
                             data: {
-                                labels: labels,
+                                labels: projectLabels,
                                 datasets: [{
-                                    label: '工时',
-                                    data: hours,
+                                    label: '项目工时',
+                                    data: projectHours,
                                     backgroundColor: 'rgba(0, 0, 192, 0.2)',
                                     borderColor: 'rgba(0, 0, 192, 1)',
                                     borderWidth: 1
@@ -196,20 +205,67 @@
                             }
                         });
 
-                        document.getElementById('totalHours').textContent = `总工时: ${totalHours} 小时`;
-                        document.getElementById('errorMessage').classList.add('hidden'); // 隐藏错误消息
-                        document.getElementById('timesheetChart').style.display = 'block'; // 显示图表
+                        document.getElementById('totalHours').textContent = `项目总工时: ${projectTotalHours.toFixed(2)} 小时`;
+
+                        // 员工工时图表
+                        const employeeLabels = data.employeeHours.map(item => item.employeeName);
+                        const employeeHours = data.employeeHours.map(item => item.hours);
+                        const employeeTotalHours = data.employeeHours.reduce((sum, item) => sum + item.hours, 0);
+
+                        // 销毁旧的员工图表实例
+                        if (employeeTimesheetChart) {
+                            employeeTimesheetChart.destroy();
+                        }
+
+                        const employeeCtx = document.getElementById('employeeTimesheetChart').getContext('2d');
+                        employeeTimesheetChart = new Chart(employeeCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: employeeLabels,
+                                datasets: [{
+                                    label: '员工工时',
+                                    data: employeeHours,
+                                    backgroundColor: 'rgba(0, 192, 0, 0.2)',
+                                    borderColor: 'rgba(0, 192, 0, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: '工时'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        document.getElementById('employeeTotalHours').textContent = `员工总工时: ${employeeTotalHours.toFixed(2)} 小时`;
+
+                        document.getElementById('errorMessage').classList.add('hidden');
+                        document.getElementById('timesheetChart').style.display = 'block';
+                        document.getElementById('employeeTimesheetChart').style.display = 'block';
                     })
                     .catch(error => {
                         console.error('获取工时数据失败:', error);
                         document.getElementById('totalHours').textContent = '总工时: 0 小时';
+                        document.getElementById('employeeTotalHours').textContent = '总工时: 0 小时';
                         
                         // 删除图表并显示错误信息
                         if (timesheetChart) {
                             timesheetChart.destroy();
-                            timesheetChart = null; // 清空图表实例
+                            timesheetChart = null;
                         }
-                        document.getElementById('timesheetChart').style.display = 'none'; // 隐图表
+                        if (employeeTimesheetChart) {
+                            employeeTimesheetChart.destroy();
+                            employeeTimesheetChart = null;
+                        }
+                        document.getElementById('timesheetChart').style.display = 'none';
+                        document.getElementById('employeeTimesheetChart').style.display = 'none';
                         document.getElementById('errorMessage').textContent = '获取工时数据失败，请稍后重试。';
                         document.getElementById('errorMessage').classList.remove('hidden');
                     });

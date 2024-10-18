@@ -362,21 +362,28 @@ func GetTimesheetData(w http.ResponseWriter, r *http.Request) {
 
 	// 统计每个项目的工时
 	projectHours := make(map[string]float64)
+	// 统计每个员工的工时
+	employeeHours := make(map[string]float64)
+
 	for _, ts := range timesheets {
 		project, err := models.GetProjectByID(ts.ProjectID)
 		if err == nil {
 			projectHours[project.Name] += ts.Hours
 		}
+		employee, err := models.GetEmployeeByID(ts.EmployeeID)
+		if err == nil {
+			employeeHours[employee.Name] += ts.Hours
+		}
 	}
 
 	// 转换为可返回的格式
-	var result []struct {
+	var projectResult []struct {
 		ProjectName string  `json:"projectName"`
 		Hours       float64 `json:"hours"`
 	}
 
 	for projectName, hours := range projectHours {
-		result = append(result, struct {
+		projectResult = append(projectResult, struct {
 			ProjectName string  `json:"projectName"`
 			Hours       float64 `json:"hours"`
 		}{
@@ -385,10 +392,36 @@ func GetTimesheetData(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var employeeResult []struct {
+		EmployeeName string  `json:"employeeName"`
+		Hours        float64 `json:"hours"`
+	}
+
+	for employeeName, hours := range employeeHours {
+		employeeResult = append(employeeResult, struct {
+			EmployeeName string  `json:"employeeName"`
+			Hours        float64 `json:"hours"`
+		}{
+			EmployeeName: employeeName,
+			Hours:        hours,
+		})
+	}
+
 	// 按工时从高到低排序
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Hours > result[j].Hours
+	sort.Slice(projectResult, func(i, j int) bool {
+		return projectResult[i].Hours > projectResult[j].Hours
 	})
+	sort.Slice(employeeResult, func(i, j int) bool {
+		return employeeResult[i].Hours > employeeResult[j].Hours
+	})
+
+	result := struct {
+		ProjectHours  interface{} `json:"projectHours"`
+		EmployeeHours interface{} `json:"employeeHours"`
+	}{
+		ProjectHours:  projectResult,
+		EmployeeHours: employeeResult,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
