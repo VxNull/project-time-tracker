@@ -23,7 +23,7 @@
                         </div>
                     </div>
                     <div class="flex items-center">
-                        <a href="/admin/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        <a href="/admin/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
                             退出
                         </a>
                     </div>
@@ -32,13 +32,23 @@
         </nav>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">项目数量</h2>
-                <p class="text-4xl font-bold text-blue-600">{{.ProjectCount}}</p>
+            <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">项目数量</h2>
+                    <p class="text-4xl font-bold text-blue-600 mb-4">{{.ProjectCount}}</p>
+                </div>
+                <a href="/admin/project" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105">
+                    管理项目
+                </a>
             </div>
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">员工数量</h2>
-                <p class="text-4xl font-bold text-green-600">{{.EmployeeCount}}</p>
+            <div class="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">员工数量</h2>
+                    <p class="text-4xl font-bold text-green-600 mb-4">{{.EmployeeCount}}</p>
+                </div>
+                <a href="/admin/employee" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-center transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105">
+                    管理员工
+                </a>
             </div>
             <div class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">本月总工时</h2>
@@ -49,7 +59,7 @@
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800">工时数据</h2>
-                <button type="submit" form="exportForm" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                <button type="submit" form="exportForm" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105">
                     导出 Excel
                 </button>
             </div>
@@ -71,15 +81,6 @@
                 <div id="totalHours" class="mt-4 text-right font-bold text-lg text-gray-700"></div>
                 <div id="errorMessage" class="mt-2 text-red-500 hidden"></div>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="/admin/project" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-center transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105">
-                管理项目
-            </a>
-            <a href="/admin/employee" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-center transition duration-300 ease-in-out transform hover:-translate-y-1 hover:scale-105">
-                管理员工
-            </a>
         </div>
     </div>
 
