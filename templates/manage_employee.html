@@ -177,6 +177,9 @@
                 <button onclick="editEmployee('${id}')" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mr-2">
                     编辑
                 </button>
+                <button onclick="resetPassword('${id}')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-2">
+                    重置密码
+                </button>
                 <form action="/admin/employee" method="POST" class="inline">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="${id}">
