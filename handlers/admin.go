@@ -292,6 +292,7 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		employeeTotalHours := make(map[int]float64)
 		monthlyHours := make(map[string]float64)
 		projectMonthlyHours := make(map[int]map[string]float64)
+		employeeMonthlyHours := make(map[int]map[string]float64)
 
 		for _, month := range months {
 			sheetName := month.Format("2006-01")
@@ -318,6 +319,7 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 			monthTotal := 0.0
 			for row, employee := range employees {
 				f.SetCellValue(sheetName, "A"+strconv.Itoa(row+2), employee.Name)
+				employeeMonthTotal := 0.0
 				for col, project := range projects {
 					hours := getHours(timesheets, employee.ID, project.ID)
 					f.SetCellValue(sheetName, getColumnName(col+1+1)+strconv.Itoa(row+2), hours)
@@ -325,6 +327,7 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 					projectTotalHours[project.ID] += hours
 					employeeTotalHours[employee.ID] += hours
 					monthTotal += hours
+					employeeMonthTotal += hours
 
 					// 记录每个项目每月的工时
 					if _, ok := projectMonthlyHours[project.ID]; !ok {
@@ -332,6 +335,11 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 					}
 					projectMonthlyHours[project.ID][sheetName] += hours
 				}
+				// 记录每个员工每月的工时
+				if _, ok := employeeMonthlyHours[employee.ID]; !ok {
+					employeeMonthlyHours[employee.ID] = make(map[string]float64)
+				}
+				employeeMonthlyHours[employee.ID][sheetName] = employeeMonthTotal
 			}
 
 			monthlyHours[sheetName] = monthTotal
@@ -397,19 +405,44 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		}
 		f.SetCellValue(summarySheet, getColumnName(len(months)+2)+strconv.Itoa(row), totalHours)
 
-		// 添加员工工时统计
+		// 添加员工工时统计（二维表格）
 		row += 2
-		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), "B"+strconv.Itoa(row), headerStyle)
 		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "员工工时统计")
-		f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), "工时")
 		row++
-		for employeeID, hours := range employeeTotalHours {
-			f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), "B"+strconv.Itoa(row), contentStyle)
-			employee, _ := models.GetEmployeeByID(employeeID)
+
+		// 设置表头
+		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), headerStyle)
+		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "员工姓名")
+		for col, month := range months {
+			f.SetCellValue(summarySheet, getColumnName(col+1+1)+strconv.Itoa(row), month.Format("2006-01"))
+		}
+		f.SetCellValue(summarySheet, getColumnName(len(months)+2)+strconv.Itoa(row), "员工总计")
+		row++
+
+		// 填充员工工时数据
+		employees, _ := models.GetAllEmployees()
+		for _, employee := range employees {
+			f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), contentStyle)
 			f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), employee.Name)
-			f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), hours)
+			totalEmployeeHours := 0.0
+			for col, month := range months {
+				monthStr := month.Format("2006-01")
+				hours := employeeMonthlyHours[employee.ID][monthStr]
+				f.SetCellValue(summarySheet, getColumnName(col+1+1)+strconv.Itoa(row), hours)
+				totalEmployeeHours += hours
+			}
+			f.SetCellValue(summarySheet, getColumnName(len(months)+2)+strconv.Itoa(row), totalEmployeeHours)
 			row++
 		}
+
+		// 添加月度总计行
+		f.SetCellStyle(summarySheet, "A"+strconv.Itoa(row), getColumnName(len(months)+2)+strconv.Itoa(row), headerStyle)
+		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), "月度总计")
+		for col, month := range months {
+			monthStr := month.Format("2006-01")
+			f.SetCellValue(summarySheet, getColumnName(col+1+1)+strconv.Itoa(row), monthlyHours[monthStr])
+		}
+		f.SetCellValue(summarySheet, getColumnName(len(months)+2)+strconv.Itoa(row), totalHours)
 
 		// 设置响应头
 		w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
