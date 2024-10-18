@@ -284,15 +284,15 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 
 			// 添加汇总统计
 			totalRow := len(employees) + 3
-			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow), "项目总计")
+			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow-1), "项目总计")
 			for col := range projects {
 				colName := getColumnName(col + 1 + 1)
-				f.SetCellFormula(sheetName, colName+strconv.Itoa(totalRow), "SUM("+colName+"2:"+colName+strconv.Itoa(totalRow-1)+")")
+				f.SetCellFormula(sheetName, colName+strconv.Itoa(totalRow-1), "SUM("+colName+"2:"+colName+strconv.Itoa(totalRow-1-1)+")")
 			}
 
 			// 设置总计
-			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow+1), "总计")
-			f.SetCellFormula(sheetName, "B"+strconv.Itoa(totalRow+1), "SUM(B"+strconv.Itoa(totalRow)+":"+getColumnName(len(projects))+strconv.Itoa(totalRow)+")")
+			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow), "总计")
+			f.SetCellFormula(sheetName, "B"+strconv.Itoa(totalRow), "SUM(B"+strconv.Itoa(totalRow-1)+":"+getColumnName(len(projects)+1)+strconv.Itoa(totalRow-1)+")")
 		}
 
 		// 设置响应头
