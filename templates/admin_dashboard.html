@@ -14,22 +14,12 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <nav class="bg-white shadow-lg rounded-lg mb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex">
-                        <div class="flex-shrink-0 flex items-center">
-                            <h1 class="text-2xl font-bold text-gray-800">管理员仪表板</h1>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <a href="/admin/logout" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
-                            退出
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold">管理员仪表板</h1>
+            <a href="/admin/logout" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                退出
+            </a>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-lg shadow-md relative overflow-hidden">
@@ -219,7 +209,7 @@
                             timesheetChart.destroy();
                             timesheetChart = null; // 清空图表实例
                         }
-                        document.getElementById('timesheetChart').style.display = 'none'; // 隐���图表
+                        document.getElementById('timesheetChart').style.display = 'none'; // 隐图表
                         document.getElementById('errorMessage').textContent = '获取工时数据失败，请稍后重试。';
                         document.getElementById('errorMessage').classList.remove('hidden');
                     });

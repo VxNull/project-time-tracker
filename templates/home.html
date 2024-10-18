@@ -90,7 +90,7 @@
                 </form>
             </div>
 
-            <span class="toggle-link" id="toggle-login">切换到管理员登录</span>
+            <span class="toggle-link" id="toggle-login">管理员登录</span>
         </div>
     </div>
 
@@ -103,11 +103,11 @@
             if (adminLogin.classList.contains('hidden')) {
                 adminLogin.classList.remove('hidden');
                 employeeLogin.classList.add('hidden');
-                toggleLink.textContent = '切换到员工登录';
+                toggleLink.textContent = '员工登录';
             } else {
                 employeeLogin.classList.remove('hidden');
                 adminLogin.classList.add('hidden');
-                toggleLink.textContent = '切换到管理员登录';
+                toggleLink.textContent = '管理员登录';
             }
         });
     </script>
