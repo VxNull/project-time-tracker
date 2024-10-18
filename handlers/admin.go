@@ -244,36 +244,55 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 		startMonth := r.FormValue("start_month")
 		endMonth := r.FormValue("end_month")
 
-		// 解析开始和结束月份
 		start, _ := time.Parse("2006-01", startMonth)
 		end, _ := time.Parse("2006-01", endMonth)
 
-		// 获取工时数据
-		timesheets, err := models.GetTimesheetsByDateRange(start, end)
-		if err != nil {
-			http.Error(w, "获取工时数据失败", http.StatusInternalServerError)
-			return
-		}
+		// 获取时间范围内的所有月份
+		months := getMonthsBetween(start, end)
 
-		// 创建 Excel 文件
 		f := excelize.NewFile()
-		sheetName := "工时数据"
-		f.NewSheet(sheetName)
 
-		// 写入表头
-		f.SetCellValue(sheetName, "A1", "员工ID")
-		f.SetCellValue(sheetName, "B1", "项目ID")
-		f.SetCellValue(sheetName, "C1", "工时")
-		f.SetCellValue(sheetName, "D1", "月份")
-		f.SetCellValue(sheetName, "E1", "描述")
+		for _, month := range months {
+			sheetName := month.Format("2006-01")
+			f.NewSheet(sheetName)
 
-		// 写入数据
-		for i, ts := range timesheets {
-			f.SetCellValue(sheetName, "A"+strconv.Itoa(i+2), ts.EmployeeID)
-			f.SetCellValue(sheetName, "B"+strconv.Itoa(i+2), ts.ProjectID)
-			f.SetCellValue(sheetName, "C"+strconv.Itoa(i+2), ts.Hours)
-			f.SetCellValue(sheetName, "D"+strconv.Itoa(i+2), ts.Month.Format("2006-01"))
-			f.SetCellValue(sheetName, "E"+strconv.Itoa(i+2), ts.Description)
+			// 获取该月的工时数据
+			timesheets, err := models.GetTimesheetsByMonth(month)
+			if err != nil {
+				http.Error(w, "获取工时数据失败", http.StatusInternalServerError)
+				return
+			}
+
+			// 获取所有项目和员工
+			projects, _ := models.GetAllProjects()
+			employees, _ := models.GetAllEmployees()
+
+			// 设置表头
+			f.SetCellValue(sheetName, "A1", "员工姓名")
+			for col, project := range projects {
+				f.SetCellValue(sheetName, getColumnName(col+1+1)+"1", project.Name+" ("+project.Code+")")
+			}
+
+			// 填充数据
+			for row, employee := range employees {
+				f.SetCellValue(sheetName, "A"+strconv.Itoa(row+2), employee.Name)
+				for col, project := range projects {
+					hours := getHours(timesheets, employee.ID, project.ID)
+					f.SetCellValue(sheetName, getColumnName(col+1+1)+strconv.Itoa(row+2), hours)
+				}
+			}
+
+			// 添加汇总统计
+			totalRow := len(employees) + 3
+			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow), "项目总计")
+			for col := range projects {
+				colName := getColumnName(col + 1 + 1)
+				f.SetCellFormula(sheetName, colName+strconv.Itoa(totalRow), "SUM("+colName+"2:"+colName+strconv.Itoa(totalRow-1)+")")
+			}
+
+			// 设置总计
+			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow+1), "总计")
+			f.SetCellFormula(sheetName, "B"+strconv.Itoa(totalRow+1), "SUM(B"+strconv.Itoa(totalRow)+":"+getColumnName(len(projects))+strconv.Itoa(totalRow)+")")
 		}
 
 		// 设置响应头
@@ -290,6 +309,35 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 
 	// 处理 GET 请求，渲染导出页面
 	http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+}
+
+// 辅助函数
+func getMonthsBetween(start, end time.Time) []time.Time {
+	var months []time.Time
+	for current := start; current.Before(end) || current.Equal(end); current = current.AddDate(0, 1, 0) {
+		months = append(months, current)
+	}
+	return months
+}
+
+func getColumnName(index int) string {
+	name := ""
+	for index > 0 {
+		index--
+		name = string(rune('A'+index%26)) + name
+		index /= 26
+	}
+	return name
+}
+
+func getHours(timesheets []models.Timesheet, employeeID, projectID int) float64 {
+	var total float64
+	for _, ts := range timesheets {
+		if ts.EmployeeID == employeeID && ts.ProjectID == projectID {
+			total += ts.Hours
+		}
+	}
+	return total
 }
 
 func GetTimesheetData(w http.ResponseWriter, r *http.Request) {

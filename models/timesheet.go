@@ -139,3 +139,37 @@ func GetTimesheetsByDateRange(start, end time.Time) ([]Timesheet, error) {
 
 	return timesheets, nil
 }
+
+// GetTimesheetsByMonth 获取指定月份的所有工时记录
+func GetTimesheetsByMonth(month time.Time) ([]Timesheet, error) {
+	startOfMonth := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, month.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Second)
+
+	query := `
+		SELECT id, employee_id, project_id, hours, month, description
+		FROM timesheets
+		WHERE month >= ? AND month <= ?
+	`
+
+	rows, err := database.DB.Query(query, startOfMonth, endOfMonth)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var timesheets []Timesheet
+	for rows.Next() {
+		var ts Timesheet
+		err := rows.Scan(&ts.ID, &ts.EmployeeID, &ts.ProjectID, &ts.Hours, &ts.Month, &ts.Description)
+		if err != nil {
+			return nil, err
+		}
+		timesheets = append(timesheets, ts)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return timesheets, nil
+}
