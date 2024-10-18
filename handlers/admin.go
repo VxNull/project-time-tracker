@@ -252,6 +252,29 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 
 		f := excelize.NewFile()
 
+		// 创建综合统计工作表
+		summarySheet := "综合统计"
+		f.NewSheet(summarySheet)
+
+		// 设置综合统计表头
+		f.SetCellValue(summarySheet, "A1", "统计项目")
+		f.SetCellValue(summarySheet, "B1", "数值")
+
+		// 获取项目和员工总数
+		projectCount, _ := models.GetProjectCount()
+		employeeCount, _ := models.GetEmployeeCount()
+
+		// 设置项目和员工总数
+		f.SetCellValue(summarySheet, "A2", "项目总数")
+		f.SetCellValue(summarySheet, "B2", projectCount)
+		f.SetCellValue(summarySheet, "A3", "员工总数")
+		f.SetCellValue(summarySheet, "B3", employeeCount)
+
+		// 计算总工时
+		var totalHours float64
+		projectTotalHours := make(map[int]float64)
+		employeeTotalHours := make(map[int]float64)
+
 		for _, month := range months {
 			sheetName := month.Format("2006-01")
 			f.NewSheet(sheetName)
@@ -279,6 +302,9 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 				for col, project := range projects {
 					hours := getHours(timesheets, employee.ID, project.ID)
 					f.SetCellValue(sheetName, getColumnName(col+1+1)+strconv.Itoa(row+2), hours)
+					totalHours += hours
+					projectTotalHours[project.ID] += hours
+					employeeTotalHours[employee.ID] += hours
 				}
 			}
 
@@ -293,6 +319,34 @@ func ExportTimesheet(w http.ResponseWriter, r *http.Request) {
 			// 设置总计
 			f.SetCellValue(sheetName, "A"+strconv.Itoa(totalRow), "总计")
 			f.SetCellFormula(sheetName, "B"+strconv.Itoa(totalRow), "SUM(B"+strconv.Itoa(totalRow-1)+":"+getColumnName(len(projects)+1)+strconv.Itoa(totalRow-1)+")")
+		}
+
+		// 在综合统计工作表中添加总工时
+		f.SetCellValue(summarySheet, "A4", "总工时")
+		f.SetCellValue(summarySheet, "B4", totalHours)
+
+		// 添加项目工时统计
+		f.SetCellValue(summarySheet, "A6", "项目工时统计")
+		f.SetCellValue(summarySheet, "A7", "项目名称")
+		f.SetCellValue(summarySheet, "B7", "工时")
+		row := 8
+		for projectID, hours := range projectTotalHours {
+			project, _ := models.GetProjectByID(projectID)
+			f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), project.Name)
+			f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), hours)
+			row++
+		}
+
+		// 添加员工工时统计
+		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row+1), "员工工时统计")
+		f.SetCellValue(summarySheet, "A"+strconv.Itoa(row+2), "员工姓名")
+		f.SetCellValue(summarySheet, "B"+strconv.Itoa(row+2), "工时")
+		row += 3
+		for employeeID, hours := range employeeTotalHours {
+			employee, _ := models.GetEmployeeByID(employeeID)
+			f.SetCellValue(summarySheet, "A"+strconv.Itoa(row), employee.Name)
+			f.SetCellValue(summarySheet, "B"+strconv.Itoa(row), hours)
+			row++
 		}
 
 		// 设置响应头
