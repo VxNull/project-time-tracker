@@ -25,13 +25,14 @@ func SubmitTimesheet(employeeID, projectID int, hours float64, month time.Time, 
 	return err
 }
 
-func GetTimesheetsByEmployee(employeeID int) ([]Timesheet, error) {
+func GetTimesheetsByEmployee(employeeID int, limit int) ([]Timesheet, error) {
 	rows, err := database.DB.Query(`
 		SELECT id, employee_id, project_id, hours, month, description, submit_date
 		FROM timesheets
 		WHERE employee_id = ?
-		ORDER BY month DESC, submit_date DESC
-	`, employeeID)
+		ORDER BY submit_date DESC
+		LIMIT ?
+	`, employeeID, limit)
 	if err != nil {
 		return nil, err
 	}

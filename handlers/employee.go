@@ -57,7 +57,7 @@ func EmployeeDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	timesheets, err := models.GetTimesheetsByEmployee(employeeID)
+	timesheets, err := models.GetTimesheetsByEmployee(employeeID, 30)
 	if err != nil {
 		http.Error(w, "获取工时记录失败", http.StatusInternalServerError)
 		return
