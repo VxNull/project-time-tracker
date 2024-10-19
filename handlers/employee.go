@@ -218,3 +218,51 @@ func UpdateTimesheet(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/employee/dashboard", http.StatusSeeOther)
 }
+
+func ChangeEmployeePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := store.Store.Get(r, "session")
+	employeeID, ok := session.Values["employee_id"].(int)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	oldPassword := r.FormValue("old_password")
+	newPassword := r.FormValue("new_password")
+	confirmPassword := r.FormValue("confirm_password")
+
+	if newPassword != confirmPassword {
+		http.Error(w, "New passwords do not match", http.StatusBadRequest)
+		return
+	}
+
+	employee, err := models.GetEmployeeByID(employeeID)
+	if err != nil {
+		http.Error(w, "Failed to get employee", http.StatusInternalServerError)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(employee.Password), []byte(oldPassword)); err != nil {
+		http.Error(w, "Incorrect old password", http.StatusUnauthorized)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to hash new password", http.StatusInternalServerError)
+		return
+	}
+
+	if err := models.UpdateEmployeePassword(employeeID, string(hashedPassword)); err != nil {
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Password updated successfully"))
+}

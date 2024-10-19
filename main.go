@@ -44,6 +44,7 @@ func main() {
 	http.HandleFunc("/employee/submit", middleware.AuthMiddleware(handlers.SubmitTimesheet))
 	http.HandleFunc("/employee/monthly-hours", middleware.AuthMiddleware(handlers.GetEmployeeMonthlyHours))
 	http.HandleFunc("/employee/update/", middleware.AuthMiddleware(handlers.UpdateTimesheet))
+	http.HandleFunc("/employee/change-password", handlers.ChangeEmployeePassword)
 
 	// 设置静态文件服务
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

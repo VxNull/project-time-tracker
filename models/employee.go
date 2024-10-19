@@ -142,3 +142,8 @@ func ResetEmployeePassword(id string, newPassword string) error {
 	_, err = database.DB.Exec("UPDATE employees SET password = ? WHERE id = ?", string(hashedPassword), id)
 	return err
 }
+
+func UpdateEmployeePassword(employeeID int, newPassword string) error {
+	_, err := database.DB.Exec("UPDATE employees SET password = ? WHERE id = ?", newPassword, employeeID)
+	return err
+}
