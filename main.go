@@ -36,6 +36,7 @@ func main() {
 	http.HandleFunc("/admin/employee", middleware.AdminAuthMiddleware(handlers.ManageEmployee))
 	http.HandleFunc("/admin/export", middleware.AdminAuthMiddleware(handlers.ExportTimesheet))
 	http.HandleFunc("/admin/get-timesheet-data", handlers.GetTimesheetData) // 添加获取工时数据的路由
+	http.HandleFunc("/admin/change-password", handlers.ChangeAdminPassword)
 
 	http.HandleFunc("/employee/login", handlers.EmployeeLogin)
 	http.HandleFunc("/employee/logout", handlers.EmployeeLogout)

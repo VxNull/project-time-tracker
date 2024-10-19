@@ -46,3 +46,8 @@ func InitDefaultAdmin() error {
 
 	return nil
 }
+
+func UpdateAdminPassword(adminID int, newPassword string) error {
+	_, err := database.DB.Exec("UPDATE admins SET password = ? WHERE id = ?", newPassword, adminID)
+	return err
+}
