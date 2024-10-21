@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/VxNull/project-time-tracker/config"
 	"github.com/VxNull/project-time-tracker/database"
 	"github.com/VxNull/project-time-tracker/handlers"
 	"github.com/VxNull/project-time-tracker/middleware"
@@ -12,21 +14,23 @@ import (
 )
 
 func main() {
+	// 加载配置文件
+	config.LoadConfig("config.yaml")
+
 	// 初始化数据库
-	err := database.InitDB("./timetracker.db")
+	err := database.InitDB(config.AppConfig.Database.Path)
 	if err != nil {
 		log.Fatal("数据库初始化失败:", err)
 	}
 
 	// 初始化默认管理员账号
-	err = models.InitDefaultAdmin()
+	err = models.InitDefaultAdmin(config.AppConfig.Admin.DefaultUsername, config.AppConfig.Admin.DefaultPassword)
 	if err != nil {
 		log.Fatal("默认管理员账号创建失败:", err)
 	}
 
 	// 初始化 session store
-	store.InitStore("your-secret-key")
-
+	store.InitStore(config.AppConfig.Session.SecretKey)
 	// 设置路由
 	http.HandleFunc("/", handlers.Home)
 	http.HandleFunc("/admin/login", handlers.AdminLogin)
@@ -57,6 +61,6 @@ func main() {
 	log.Println("数据库连接测试成功")
 
 	// 启动服务器
-	log.Println("服务器启动在 http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("服务器启动在 http://localhost:%d\n", config.AppConfig.Server.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.AppConfig.Server.Port), nil))
 }

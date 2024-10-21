@@ -1,0 +1,12 @@
+database:
+  path: "./timetracker.db"
+
+admin:
+  default_username: "admin"
+  default_password: "password123"
+
+server:
+  port: 8080
+
+session:
+  secret_key: "your-secret-key"

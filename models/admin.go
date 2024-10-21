@@ -31,7 +31,7 @@ func GetAdminByUsername(username string) (*Admin, error) {
 	return &admin, nil
 }
 
-func InitDefaultAdmin() error {
+func InitDefaultAdmin(username, password string) error {
 	// 检查是否已存在管理员账号
 	var count int
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM admins").Scan(&count)
@@ -41,7 +41,7 @@ func InitDefaultAdmin() error {
 
 	// 如果不存在管理员账号,则创建默认账号
 	if count == 0 {
-		return CreateAdmin("admin", "password123")
+		return CreateAdmin(username, password)
 	}
 
 	return nil
