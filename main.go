@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,8 +15,12 @@ import (
 )
 
 func main() {
+	// 定义命令行参数
+	configPath := flag.String("c", "config.yaml", "配置文件路径")
+	flag.Parse()
+
 	// 加载配置文件
-	config.LoadConfig("config.yaml")
+	config.LoadConfig(*configPath)
 
 	// 初始化数据库
 	err := database.InitDB(config.AppConfig.Database.Path)
@@ -31,15 +36,16 @@ func main() {
 
 	// 初始化 session store
 	store.InitStore(config.AppConfig.Session.SecretKey)
+
 	// 设置路由
 	http.HandleFunc("/", handlers.Home)
 	http.HandleFunc("/admin/login", handlers.AdminLogin)
 	http.HandleFunc("/admin/dashboard", middleware.AdminAuthMiddleware(handlers.AdminDashboard))
-	http.HandleFunc("/admin/logout", handlers.AdminLogout) // 添加退出路由
+	http.HandleFunc("/admin/logout", handlers.AdminLogout)
 	http.HandleFunc("/admin/project", middleware.AdminAuthMiddleware(handlers.ManageProject))
 	http.HandleFunc("/admin/employee", middleware.AdminAuthMiddleware(handlers.ManageEmployee))
 	http.HandleFunc("/admin/export", middleware.AdminAuthMiddleware(handlers.ExportTimesheet))
-	http.HandleFunc("/admin/get-timesheet-data", handlers.GetTimesheetData) // 添加获取工时数据的路由
+	http.HandleFunc("/admin/get-timesheet-data", handlers.GetTimesheetData)
 	http.HandleFunc("/admin/change-password", handlers.ChangeAdminPassword)
 
 	http.HandleFunc("/employee/login", handlers.EmployeeLogin)
