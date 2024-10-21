@@ -38,18 +38,39 @@
    go mod tidy
    ```
 
-4. 运行应用:
+4. 在项目根目录创建 `config.yaml` 文件,结构如下:
+   ```yaml
+   database:
+     path: "./timetracker.db"
+   
+   admin:
+     default_username: "admin"
+     default_password: "password123"
+   
+   server:
+     port: 8080
+   
+   session:
+     secret_key: "your-secret-key"
+   ```
+
+5. 运行应用:
    ```
    go run main.go
    ```
+   
+   或者指定自定义配置文件路径:
+   ```
+   go run main.go -c /path/to/your/config.yaml
+   ```
 
-5. 在浏览器中访问 `http://localhost:8080`
+6. 在浏览器中访问 `http://localhost:8080` (或配置文件中指定的端口)
 
 ## 使用说明
 
 ### 管理员
 
-1. 使用默认管理员账号登录 (用户名: admin, 密码: password123)
+1. 使用默认管理员账号登录 (用户名: admin, 密码: password123,或配置文件中指定的值)
 2. 在仪表盘中查看整体工时统计
 3. 管理项目和员工账户
 4. 导出工时报表

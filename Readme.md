@@ -38,31 +38,52 @@ The Project Time Tracking System is a web application developed in Go, designed 
    go mod tidy
    ```
 
-4. Run the application:
+4. Create a `config.yaml` file in the project root directory with the following structure:
+   ```yaml
+   database:
+     path: "./timetracker.db"
+   
+   admin:
+     default_username: "admin"
+     default_password: "password123"
+   
+   server:
+     port: 8080
+   
+   session:
+     secret_key: "your-secret-key"
+   ```
+
+5. Run the application:
    ```
    go run main.go
    ```
+   
+   Or specify a custom config file path:
+   ```
+   go run main.go -c /path/to/your/config.yaml
+   ```
 
-5. Access the application in your browser at `http://localhost:8080`
+6. Access the application in your browser at `http://localhost:8080` (or the port specified in your config file)
 
 ## Usage Instructions
 
-### Administrators
+### Administrator
 
-1. Log in using the default admin account (username: admin, password: password123)
+1. Log in using the default admin account (username: admin, password: password123, or as specified in your config file)
 2. View overall time statistics in the dashboard
 3. Manage projects and employee accounts
 4. Export time reports
 
-### Employees
+### Employee
 
 1. Log in using the assigned account
 2. Submit daily work hours
 3. View personal time statistics
 
-## Contribution Guidelines
+## Contributing Guidelines
 
-We welcome all forms of contributions, including but not limited to:
+We welcome contributions of all forms, including but not limited to:
 
 - Reporting bugs
 - Suggesting new features
@@ -83,7 +104,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact Information
 
-If you have any questions or suggestions, please contact us through:
+If you have any questions or suggestions, please contact us:
 
 - Project Link: [https://github.com/VxNull/project-time-tracker](https://github.com/VxNull/project-time-tracker)
 - Issue Tracker: [https://github.com/VxNull/project-time-tracker/issues](https://github.com/VxNull/project-time-tracker/issues)
