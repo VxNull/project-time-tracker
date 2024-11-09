@@ -22,7 +22,13 @@ builds:
       - linux
       - windows
       - darwin
-
+    goarch:
+      - "386"
+      - amd64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: arm
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
