@@ -14,7 +14,7 @@ flags:
 # The OS to compile for. `GOOS` env variable will be set to this value.
 # windows: windows
 # linux: linux
-goos: windows
+goos: linux
 
 # The architecture to compile for. `GOARCH` env variable will be set to this value.
 goarch: amd64
