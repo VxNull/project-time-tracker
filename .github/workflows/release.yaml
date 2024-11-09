@@ -1,5 +1,18 @@
 name: Release
-
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  deployments: none
+  id-token: none
+  issues: read
+  discussions: read
+  packages: write
+  pages: write
+  pull-requests: read
+  repository-projects: write
+  security-events: read
+  statuses: read
 on:
   workflow_dispatch:
   push:
