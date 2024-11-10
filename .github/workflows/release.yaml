@@ -40,4 +40,4 @@ jobs:
           version: latest #'~> v2'
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} // 使用 github-actions 发布
+          GITHUB_TOKEN: ${{ secrets.MY_ACTION_TK }} // 使用 github-actions 发布${{ secrets.GITHUB_TOKEN }}
