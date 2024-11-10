@@ -39,5 +39,5 @@ jobs:
           distribution: goreleaser
           version: latest #'~> v2'
           args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} // 使用 github-actions 发布
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} // 使用 github-actions 发布
